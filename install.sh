@@ -3,8 +3,12 @@
 set -euo pipefail
 
 REPOSITORY="shlgd/SuperDictate"
+RELEASE_VERSION="${SUPERDICTATE_VERSION:-0.2.20}"
+RELEASE_SHA256="33a1bb5a1f38a1d97b409da6a77ee1d44969e457d4593ac66c9545b1926f3361"
 REF="${SUPERDICTATE_REF:-main}"
-APP_PATH="/Applications/SuperDictate.app"
+APP_PATH="${SUPERDICTATE_APP_PATH:-/Applications/SuperDictate.app}"
+BUILD_FROM_SOURCE="${SUPERDICTATE_BUILD_FROM_SOURCE:-0}"
+NO_OPEN="${SUPERDICTATE_NO_OPEN:-0}"
 AGENT_LABEL="com.local.superdictate.agent"
 
 say() {
@@ -23,52 +27,104 @@ version_at_least_14() {
 }
 
 run_as_admin() {
-    if [[ -w /Applications ]]; then
+    if [[ -w "$(dirname "$APP_PATH")" ]]; then
         "$@"
     else
         sudo "$@"
     fi
 }
 
+verify_app() {
+    local app="$1"
+    local executable="$app/Contents/MacOS/SuperDictate"
+    local bundle_id
+
+    [[ -x "$executable" ]] || fail "В архиве нет исполняемого файла SuperDictate."
+    bundle_id="$(plutil -extract CFBundleIdentifier raw -o - "$app/Contents/Info.plist")"
+    [[ "$bundle_id" == "com.local.superdictate" ]] || fail "Неверный идентификатор приложения: $bundle_id"
+    file "$executable" | grep -q 'arm64' || fail "Сборка не предназначена для Apple Silicon."
+    codesign --verify --deep --strict "$app" || fail "Проверка подписи приложения не прошла."
+}
+
+download_release() {
+    local work_dir="$1"
+    local archive="$work_dir/SuperDictate.zip"
+    local expected actual
+
+    say "Скачиваю готовую сборку $RELEASE_VERSION..."
+    curl --fail --location --silent --show-error \
+        "https://github.com/$REPOSITORY/releases/download/v$RELEASE_VERSION/SuperDictate.zip" \
+        -o "$archive"
+
+    expected="$RELEASE_SHA256"
+    actual="$(shasum -a 256 "$archive" | awk '{print $1}')"
+    [[ "$actual" == "$expected" ]] || fail "Контрольная сумма загрузки не совпала."
+
+    ditto -x -k "$archive" "$work_dir/release"
+    [[ -d "$work_dir/release/SuperDictate.app" ]] || fail "В релизе нет SuperDictate.app."
+    ditto "$work_dir/release/SuperDictate.app" "$work_dir/SuperDictate.app"
+}
+
+build_from_source() {
+    local work_dir="$1"
+    local source_dir
+
+    command -v swift >/dev/null 2>&1 || {
+        say "Для сборки из исходников нужны бесплатные инструменты Apple. Открываю их установку..."
+        xcode-select --install >/dev/null 2>&1 || true
+        printf '\nПосле установки снова запустите ту же команду.\n'
+        exit 0
+    }
+
+    say "Скачиваю открытый исходный код..."
+    curl --fail --location --silent --show-error \
+        "https://github.com/$REPOSITORY/archive/$REF.zip" \
+        -o "$work_dir/source.zip"
+    ditto -x -k "$work_dir/source.zip" "$work_dir/source"
+    source_dir="$(find "$work_dir/source" -mindepth 1 -maxdepth 1 -type d -print -quit)"
+    [[ -n "$source_dir" ]] || fail "Не удалось распаковать исходный код."
+    "$source_dir/scripts/build-app.sh" "$work_dir/SuperDictate.app"
+}
+
 [[ "$(uname -s)" == "Darwin" ]] || fail "Работает только на macOS."
 [[ "$(uname -m)" == "arm64" ]] || fail "Нужен Mac с Apple Silicon (M1 или новее)."
 version_at_least_14 || fail "Нужна macOS 14 или новее."
 
-if ! command -v swift >/dev/null 2>&1; then
-    say "Сначала нужны бесплатные инструменты Apple. Открываю их установку..."
-    xcode-select --install >/dev/null 2>&1 || true
-    printf '\nПосле установки снова запустите эту же команду.\n'
-    exit 0
-fi
-
-command -v curl >/dev/null 2>&1 || fail "Не найден curl."
-command -v ditto >/dev/null 2>&1 || fail "Не найден ditto."
+for command_name in curl ditto shasum plutil file codesign; do
+    command -v "$command_name" >/dev/null 2>&1 || fail "Не найдена системная команда: $command_name"
+done
 
 WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/superdictate-install.XXXXXX")"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
-say "Скачиваю открытый исходный код..."
-ARCHIVE_URL="https://github.com/$REPOSITORY/archive/$REF.zip"
-curl --fail --location --silent --show-error "$ARCHIVE_URL" -o "$WORK_DIR/source.zip"
-ditto -x -k "$WORK_DIR/source.zip" "$WORK_DIR/source"
-SOURCE_DIR="$(find "$WORK_DIR/source" -mindepth 1 -maxdepth 1 -type d -print -quit)"
-[[ -n "$SOURCE_DIR" ]] || fail "Не удалось распаковать исходный код."
+if [[ "$BUILD_FROM_SOURCE" == "1" ]]; then
+    build_from_source "$WORK_DIR"
+else
+    download_release "$WORK_DIR"
+fi
 
-"$SOURCE_DIR/scripts/build-app.sh" "$WORK_DIR/SuperDictate.app"
+verify_app "$WORK_DIR/SuperDictate.app"
+say "Устанавливаю приложение в $APP_PATH..."
 
-say "Устанавливаю приложение в /Applications..."
-/bin/launchctl bootout "gui/$UID/$AGENT_LABEL" >/dev/null 2>&1 || true
-/usr/bin/pkill -x SuperDictate >/dev/null 2>&1 || true
+if [[ "$APP_PATH" == "/Applications/SuperDictate.app" ]]; then
+    /bin/launchctl bootout "gui/$UID/$AGENT_LABEL" >/dev/null 2>&1 || true
+    /usr/bin/pkill -x SuperDictate >/dev/null 2>&1 || true
+fi
 
-INCOMING="/Applications/.SuperDictate.install.$$"
+INCOMING="$(dirname "$APP_PATH")/.SuperDictate.install.$$"
 run_as_admin rm -rf "$INCOMING"
 run_as_admin ditto "$WORK_DIR/SuperDictate.app" "$INCOMING"
+verify_app "$INCOMING"
 run_as_admin rm -rf "$APP_PATH"
 run_as_admin mv "$INCOMING" "$APP_PATH"
 
-codesign --verify --deep --strict "$APP_PATH" || fail "Проверка установленного приложения не прошла."
-say "Готово. Открываю SuperDictate..."
-open "$APP_PATH"
+verify_app "$APP_PATH"
 
-printf '\nВыдайте приложению три разрешения в открывшейся панели.\n'
-printf 'Первый запуск также скачает локальную модель распознавания.\n\n'
+if [[ "$NO_OPEN" == "1" ]]; then
+    say "Готово. Проверенная сборка установлена."
+else
+    say "Готово. Открываю SuperDictate..."
+    open "$APP_PATH"
+    printf '\nВыдайте приложению три разрешения в открывшейся панели.\n'
+    printf 'Первый запуск также скачает локальную модель распознавания.\n\n'
+fi

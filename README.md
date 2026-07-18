@@ -21,8 +21,9 @@ curl -fsSL https://raw.githubusercontent.com/shlgd/SuperDictate/main/install.sh 
 При первом запуске приложение один раз скачает локальную модель распознавания
 речи (около 600 МБ). После этого интернет для диктовки не нужен.
 
-Если на Mac ещё нет инструментов Apple для сборки, установщик откроет их
-стандартную установку. После её окончания запустите ту же команду ещё раз.
+Эти три разрешения обязательны: macOS не позволяет приложению самостоятельно
+включить микрофон, слушать глобальную горячую клавишу или вставлять текст в
+другие приложения.
 
 ## Использование
 
@@ -38,15 +39,16 @@ curl -fsSL https://raw.githubusercontent.com/shlgd/SuperDictate/main/install.sh 
 
 ## Что делает установщик
 
-Установщик скачивает этот репозиторий, собирает приложение локально через
-официальный Swift toolchain, помещает `SuperDictate.app` в `/Applications` и
-открывает его. Код, который выполняется, находится в [install.sh](install.sh)
-и [scripts/build-app.sh](scripts/build-app.sh).
+Установщик скачивает готовую сборку из
+[GitHub Releases](https://github.com/shlgd/SuperDictate/releases), проверяет её
+SHA-256 и подпись, помещает `SuperDictate.app` в `/Applications` и открывает
+его. Xcode и инструменты разработчика для обычной установки не нужны. Код
+установщика находится в [install.sh](install.sh).
 
-Сейчас публичная сборка подписывается локально на вашем Mac. Это позволяет не
-обходить Gatekeeper командой `xattr`, но после обновления macOS иногда может
-повторно запросить системные разрешения. Полностью нотарифицированная сборка
-потребует сертификат Apple Developer ID.
+Публичная сборка подписана ad-hoc и пока не нотарифицирована Apple. Команда
+установки не обходит Gatekeeper через `xattr`, но при обновлении приложения
+macOS может повторно запросить разрешения. Стабильная нотарифицированная
+подпись потребует сертификат Apple Developer ID.
 
 ## Приватность
 
@@ -66,6 +68,13 @@ cd SuperDictate
 open ./dist/SuperDictate.app
 ```
 
+Ту же проверяемую установку можно целиком выполнить из исходников одной
+командой. Для этого понадобятся бесплатные Apple Command Line Tools:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shlgd/SuperDictate/main/install.sh | SUPERDICTATE_BUILD_FROM_SOURCE=1 bash
+```
+
 ## Удаление
 
 ```bash
@@ -81,4 +90,3 @@ SuperDictate основан на открытом проекте
 [Parakey](https://github.com/rcourtman/parakey) Richard Courtman. Исходный и
 изменённый код распространяется по лицензии MIT. См. [LICENSE](LICENSE) и
 [NOTICE.md](NOTICE.md).
-
