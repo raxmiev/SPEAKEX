@@ -301,6 +301,214 @@ let DICTATION_LANGUAGE_DISPLAY: [DictationLanguage: String] = [
     .serbian: "Serbian",
 ]
 
+
+// MARK: - UI language
+
+/// Interface language for menus, the control panel, and status text.
+/// `.system` follows macOS preferred languages, falling back to English.
+enum UILanguage: String, CaseIterable {
+    case system
+    case english = "en"
+    case russian = "ru"
+    case uzbek = "uz"
+
+    var displayName: String {
+        switch self {
+        case .system:  return L("System")
+        case .english: return "English"
+        case .russian: return "Русский"
+        case .uzbek:   return "Oʻzbekcha"
+        }
+    }
+}
+
+func resolvedUILanguageCode(_ language: UILanguage) -> String {
+    switch language {
+    case .english: return "en"
+    case .russian: return "ru"
+    case .uzbek: return "uz"
+    case .system:
+        let preferred = Locale.preferredLanguages.first ?? "en"
+        if preferred.hasPrefix("ru") { return "ru" }
+        if preferred.hasPrefix("uz") { return "uz" }
+        return "en"
+    }
+}
+
+/// Translation table keyed by the English source string. Missing keys fall
+/// back to English, so partial coverage degrades gracefully.
+let UI_TRANSLATIONS: [String: [String: String]] = [
+    // Shared / panel
+    "System": ["ru": "Системный", "uz": "Tizim"],
+    "Control panel. Closing this window does not stop dictation.": ["ru": "Панель управления. Закрытие окна не останавливает диктовку.", "uz": "Boshqaruv paneli. Oynani yopish diktovkani to‘xtatmaydi."],
+    "Service": ["ru": "Служба", "uz": "Xizmat"],
+    "Permissions": ["ru": "Разрешения", "uz": "Ruxsatlar"],
+    "Settings": ["ru": "Настройки", "uz": "Sozlamalar"],
+    "Dictation service": ["ru": "Служба диктовки", "uz": "Diktovka xizmati"],
+    "Dictation key": ["ru": "Клавиша диктовки", "uz": "Diktovka tugmasi"],
+    "Interface language": ["ru": "Язык интерфейса", "uz": "Interfeys tili"],
+    "Interface Language": ["ru": "Язык интерфейса", "uz": "Interfeys tili"],
+    "Language of the SPEAKEX menus and panel.": ["ru": "Язык меню и панели SPEAKEX.", "uz": "SPEAKEX menyulari va paneli tili."],
+    "Option + Command sends Enter": ["ru": "Option + Command отправляет Enter", "uz": "Option + Command Enter yuboradi"],
+    "On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter.": ["ru": "Вкл: текст просто вставляется, без Enter. Выкл: после вставки автоматически нажимается Enter.", "uz": "Yoqilgan: matn Enter bosilmasdan qo‘yiladi. O‘chirilgan: qo‘yilgandan keyin Enter bosiladi."],
+    "Recording color": ["ru": "Цвет записи", "uz": "Yozish rangi"],
+    "Color used while the microphone is listening.": ["ru": "Цвет, пока микрофон слушает.", "uz": "Mikrofon eshitayotganda ishlatiladigan rang."],
+    "Transcribing color": ["ru": "Цвет расшифровки", "uz": "Matnga o‘girish rangi"],
+    "Color used while speech is being converted to text.": ["ru": "Цвет, пока речь превращается в текст.", "uz": "Nutq matnga aylantirilayotganda ishlatiladigan rang."],
+    "HUD background": ["ru": "Фон индикатора", "uz": "Indikator foni"],
+    "Capsule background follows the system appearance or stays fixed.": ["ru": "Фон капсулы следует системной теме или остаётся фиксированным.", "uz": "Kapsula foni tizim mavzusiga ergashadi yoki o‘zgarmaydi."],
+    "Start": ["ru": "Запустить", "uz": "Ishga tushirish"],
+    "Restart": ["ru": "Перезапустить", "uz": "Qayta ishga tushirish"],
+    "Stop": ["ru": "Остановить", "uz": "To‘xtatish"],
+    "Close Panel": ["ru": "Закрыть панель", "uz": "Panelni yopish"],
+    "Starting": ["ru": "Запускается", "uz": "Ishga tushmoqda"],
+    "Dictation service is launching.": ["ru": "Служба диктовки запускается.", "uz": "Diktovka xizmati ishga tushmoqda."],
+    "Stopped": ["ru": "Остановлена", "uz": "To‘xtatilgan"],
+    "Off": ["ru": "Выкл.", "uz": "O‘chirilgan"],
+    "Dictation is off until the service is started.": ["ru": "Диктовка выключена, пока служба не запущена.", "uz": "Xizmat ishga tushirilgunga qadar diktovka o‘chirilgan."],
+    "Dictation service is off. Press Start to turn it back on.": ["ru": "Служба диктовки выключена. Нажмите «Запустить», чтобы включить её.", "uz": "Diktovka xizmati o‘chirilgan. Yoqish uchun «Ishga tushirish» tugmasini bosing."],
+    "Granted": ["ru": "Выдано", "uz": "Berilgan"],
+    "Missing": ["ru": "Не выдано", "uz": "Berilmagan"],
+    "Grant": ["ru": "Выдать", "uz": "Berish"],
+    "Try Again": ["ru": "Попробовать ещё", "uz": "Qayta urinish"],
+    "Microphone": ["ru": "Микрофон", "uz": "Mikrofon"],
+    "Accessibility": ["ru": "Универсальный доступ", "uz": "Maxsus imkoniyatlar"],
+    "Input Monitoring": ["ru": "Мониторинг ввода", "uz": "Kiritishni kuzatish"],
+    "Lets the service hear your voice while dictation is active.": ["ru": "Позволяет службе слышать ваш голос во время диктовки.", "uz": "Diktovka paytida xizmatga ovozingizni eshitish imkonini beradi."],
+    "Lets the service paste the transcript at your cursor.": ["ru": "Позволяет службе вставлять текст в позицию курсора.", "uz": "Xizmatga matnni kursor joyiga qo‘yish imkonini beradi."],
+    "Lets the service see the dictation hotkey globally.": ["ru": "Позволяет службе видеть горячую клавишу диктовки во всех приложениях.", "uz": "Xizmatga diktovka tugmasini hamma joyda ko‘rish imkonini beradi."],
+    "Running": ["ru": "Работает", "uz": "Ishlamoqda"],
+    "Recording": ["ru": "Идёт запись", "uz": "Yozilmoqda"],
+    "Transcribing": ["ru": "Расшифровка", "uz": "Matnga o‘girilmoqda"],
+    "Needs Access": ["ru": "Нужны разрешения", "uz": "Ruxsat kerak"],
+    "Error": ["ru": "Ошибка", "uz": "Xato"],
+    "Stopping": ["ru": "Останавливается", "uz": "To‘xtamoqda"],
+    "Couldn't Start Dictation Service": ["ru": "Не удалось запустить службу диктовки", "uz": "Diktovka xizmatini ishga tushirib bo‘lmadi"],
+    "Couldn't Restart Dictation Service": ["ru": "Не удалось перезапустить службу диктовки", "uz": "Diktovka xizmatini qayta ishga tushirib bo‘lmadi"],
+    "Stop Dictation Service?": ["ru": "Остановить службу диктовки?", "uz": "Diktovka xizmati to‘xtatilsinmi?"],
+    "Dictation will stop until you start the service again.": ["ru": "Диктовка перестанет работать, пока вы снова не запустите службу.", "uz": "Xizmatni qayta ishga tushirmaguningizcha diktovka ishlamaydi."],
+    "Keep Running": ["ru": "Оставить", "uz": "Ishlayversin"],
+    "Stop Service": ["ru": "Остановить", "uz": "To‘xtatish"],
+    // Agent status
+    "Recording dictation.": ["ru": "Идёт запись диктовки.", "uz": "Diktovka yozilmoqda."],
+    "Transcribing your last recording.": ["ru": "Расшифровываю последнюю запись.", "uz": "Oxirgi yozuv matnga o‘girilmoqda."],
+    "Press %@ to dictate.": ["ru": "Нажмите %@ для диктовки.", "uz": "Diktovka uchun %@ tugmasini bosing."],
+    "Hold %@ to dictate.": ["ru": "Удерживайте %@ для диктовки.", "uz": "Diktovka uchun %@ tugmasini bosib turing."],
+    "Grant %@ to finish setup.": ["ru": "Выдайте разрешения: %@.", "uz": "Sozlashni yakunlash uchun ruxsat bering: %@."],
+    "Starting hotkey listener.": ["ru": "Запуск обработчика горячих клавиш.", "uz": "Tugma kuzatuvchisi ishga tushmoqda."],
+    "Starting dictation service.": ["ru": "Запуск службы диктовки.", "uz": "Diktovka xizmati ishga tushmoqda."],
+    "Dictation service is stopping.": ["ru": "Служба диктовки останавливается.", "uz": "Diktovka xizmati to‘xtamoqda."],
+    "Dictation service is stopped.": ["ru": "Служба диктовки остановлена.", "uz": "Diktovka xizmati to‘xtatilgan."],
+    // Menu status
+    "Recording...": ["ru": "Идёт запись…", "uz": "Yozilmoqda…"],
+    "Transcribing...": ["ru": "Расшифровка…", "uz": "Matnga o‘girilmoqda…"],
+    "Press %@ to dictate": ["ru": "Нажмите %@ для диктовки", "uz": "Diktovka uchun %@ tugmasini bosing"],
+    "Hold %@ to dictate": ["ru": "Удерживайте %@ для диктовки", "uz": "Diktovka uchun %@ tugmasini bosib turing"],
+    "Grant permissions to finish setup": ["ru": "Выдайте разрешения для завершения настройки", "uz": "Sozlashni tugatish uchun ruxsatlarni bering"],
+    "Starting hotkey listener…": ["ru": "Запуск обработчика горячих клавиш…", "uz": "Tugma kuzatuvchisi ishga tushmoqda…"],
+    "SPEAKEX is not ready": ["ru": "SPEAKEX не готов", "uz": "SPEAKEX tayyor emas"],
+    "Loading speech model…": ["ru": "Загрузка модели распознавания…", "uz": "Nutq modeli yuklanmoqda…"],
+    "Starting audio input…": ["ru": "Запуск аудиовхода…", "uz": "Audio kirish ishga tushmoqda…"],
+    "Finishing setup…": ["ru": "Завершение настройки…", "uz": "Sozlash yakunlanmoqda…"],
+    "Recovering interrupted dictation…": ["ru": "Восстановление прерванной диктовки…", "uz": "To‘xtab qolgan diktovka tiklanmoqda…"],
+    // Menu items
+    "Cancel Recording": ["ru": "Отменить запись", "uz": "Yozuvni bekor qilish"],
+    "Copy Last Transcript": ["ru": "Скопировать последний текст", "uz": "Oxirgi matndan nusxa olish"],
+    "Recent Transcripts": ["ru": "Недавние расшифровки", "uz": "So‘nggi matnlar"],
+    "Clear Recent Transcripts": ["ru": "Очистить недавние", "uz": "So‘nggi matnlarni tozalash"],
+    "Dictation": ["ru": "Диктовка", "uz": "Diktovka"],
+    "Text": ["ru": "Текст", "uz": "Matn"],
+    "Behavior": ["ru": "Поведение", "uz": "Ishlash tartibi"],
+    "Hotkey": ["ru": "Горячая клавиша", "uz": "Tezkor tugma"],
+    "Trigger": ["ru": "Режим нажатия", "uz": "Bosish rejimi"],
+    "Press and hold": ["ru": "Нажать и держать", "uz": "Bosib turish"],
+    "Press to toggle": ["ru": "Нажатие — старт/стоп", "uz": "Bosish — yoqish/o‘chirish"],
+    "Language Hint": ["ru": "Язык распознавания", "uz": "Aniqlash tili"],
+    "System default": ["ru": "Системный по умолчанию", "uz": "Tizim standarti"],
+    "Unavailable: %@": ["ru": "Недоступно: %@", "uz": "Mavjud emas: %@"],
+    "After Pasting": ["ru": "После вставки", "uz": "Qo‘yilgandan keyin"],
+    "Append space": ["ru": "Добавлять пробел", "uz": "Bo‘sh joy qo‘shish"],
+    "No suffix": ["ru": "Ничего не добавлять", "uz": "Hech narsa qo‘shilmasin"],
+    "Append newline": ["ru": "Добавлять перевод строки", "uz": "Yangi qator qo‘shish"],
+    "Text Corrections": ["ru": "Исправления текста", "uz": "Matn tuzatishlari"],
+    "Text Corrections (%d)": ["ru": "Исправления текста (%d)", "uz": "Matn tuzatishlari (%d)"],
+    "Add Correction…": ["ru": "Добавить исправление…", "uz": "Tuzatish qo‘shish…"],
+    "Remove filler words (um, uh, ah, er, hmm)": ["ru": "Убирать слова-паразиты (эм, э-э, м-м)", "uz": "Parazit so‘zlarni olib tashlash (um, eh, mm)"],
+    "Show recording waveform": ["ru": "Показывать индикатор записи", "uz": "Yozish indikatorini ko‘rsatish"],
+    "Option+Command sends Enter": ["ru": "Option+Command отправляет Enter", "uz": "Option+Command Enter yuboradi"],
+    "Mute system audio while recording": ["ru": "Глушить звук системы во время записи", "uz": "Yozish paytida tizim ovozini o‘chirish"],
+    "Play feedback sounds": ["ru": "Звуковые сигналы", "uz": "Ovozli signallar"],
+    "Automatically check for updates": ["ru": "Автоматически проверять обновления", "uz": "Yangilanishlarni avtomatik tekshirish"],
+    "Periodically checks GitHub for a newer release and only notifies you.": ["ru": "Периодически проверяет GitHub и только уведомляет о новой версии.", "uz": "Vaqti-vaqti bilan GitHubni tekshiradi va faqat xabar beradi."],
+    "Launch at Login": ["ru": "Запускать при входе", "uz": "Kirishda ishga tushirish"],
+    "Approve SPEAKEX in System Settings → General → Login Items.": ["ru": "Разрешите SPEAKEX: Системные настройки → Основные → Объекты входа.", "uz": "Tizim sozlamalari → Asosiy → Kirish obyektlarida SPEAKEXga ruxsat bering."],
+    "Show SPEAKEX in Dock": ["ru": "Показывать SPEAKEX в Dock", "uz": "SPEAKEXni Dockda ko‘rsatish"],
+    "Support": ["ru": "Поддержка", "uz": "Yordam"],
+    "Setup Checklist…": ["ru": "Чеклист настройки…", "uz": "Sozlash ro‘yxati…"],
+    "Check for Updates…": ["ru": "Проверить обновления…", "uz": "Yangilanishlarni tekshirish…"],
+    "Checking for Updates…": ["ru": "Проверяю обновления…", "uz": "Yangilanishlar tekshirilmoqda…"],
+    "About SPEAKEX": ["ru": "О SPEAKEX", "uz": "SPEAKEX haqida"],
+    "Copy Diagnostics": ["ru": "Скопировать диагностику", "uz": "Diagnostikadan nusxa olish"],
+    "Save Diagnostics…": ["ru": "Сохранить диагностику…", "uz": "Diagnostikani saqlash…"],
+    "Reset Speech Model Cache…": ["ru": "Сбросить кэш модели…", "uz": "Model keshini tozalash…"],
+    "Resetting Speech Model Cache…": ["ru": "Сбрасываю кэш модели…", "uz": "Model keshi tozalanmoqda…"],
+    "Delete the speech model cache and download a fresh verified copy.": ["ru": "Удалить кэш модели и скачать свежую проверенную копию.", "uz": "Model keshini o‘chirib, yangi tekshirilgan nusxani yuklab olish."],
+    "Quit SPEAKEX": ["ru": "Завершить SPEAKEX", "uz": "SPEAKEXdan chiqish"],
+    "Record Hotkey…": ["ru": "Записать клавишу…", "uz": "Tugmani yozib olish…"],
+    "Reset Hotkey to Default": ["ru": "Сбросить клавишу по умолчанию", "uz": "Tugmani standartga qaytarish"],
+    "Recorded custom hotkey": ["ru": "Записанная своя клавиша", "uz": "Yozib olingan tugma"],
+    "Use Right Option for dictation.": ["ru": "Использовать правый Option для диктовки.", "uz": "Diktovka uchun o‘ng Optiondan foydalanish."],
+    "Record Hotkey": ["ru": "Запись клавиши", "uz": "Tugmani yozib olish"],
+    "Press a right-side modifier key or an F-key.": ["ru": "Нажмите правый модификатор или F-клавишу.", "uz": "O‘ng modifikator yoki F-tugmasini bosing."],
+    "Use Selected": ["ru": "Использовать", "uz": "Tanlanganni ishlatish"],
+    "Cancel": ["ru": "Отмена", "uz": "Bekor qilish"],
+    "Waiting for key…": ["ru": "Ожидание клавиши…", "uz": "Tugma kutilmoqda…"],
+    "⚠ Grant %@ permission…": ["ru": "⚠ Выдать разрешение «%@»…", "uz": "⚠ «%@» ruxsatini berish…"],
+    "⚠ Grant %@ (try again — will reset stuck state)…": ["ru": "⚠ Выдать %@ (ещё раз — сбросит зависшее состояние)…", "uz": "⚠ %@ (yana — osilib qolgan holatni tiklaydi)…"],
+    // Colors and HUD styles
+    "Red": ["ru": "Красный", "uz": "Qizil"],
+    "Orange": ["ru": "Оранжевый", "uz": "To‘q sariq"],
+    "Pink": ["ru": "Розовый", "uz": "Pushti"],
+    "Purple": ["ru": "Фиолетовый", "uz": "Binafsha"],
+    "Blue": ["ru": "Синий", "uz": "Ko‘k"],
+    "Cyan": ["ru": "Голубой", "uz": "Moviy"],
+    "Green": ["ru": "Зелёный", "uz": "Yashil"],
+    "White": ["ru": "Белый", "uz": "Oq"],
+    "Dark": ["ru": "Тёмный", "uz": "Qorong‘i"],
+    "Light": ["ru": "Светлый", "uz": "Yorug‘"],
+    // Dictation languages
+    "Auto-detect": ["ru": "Автоопределение", "uz": "Avtomatik aniqlash"],
+    "English": ["ru": "Английский", "uz": "Inglizcha"],
+    "Spanish": ["ru": "Испанский", "uz": "Ispancha"],
+    "French": ["ru": "Французский", "uz": "Fransuzcha"],
+    "German": ["ru": "Немецкий", "uz": "Nemischa"],
+    "Italian": ["ru": "Итальянский", "uz": "Italyancha"],
+    "Portuguese": ["ru": "Португальский", "uz": "Portugalcha"],
+    "Romanian": ["ru": "Румынский", "uz": "Rumincha"],
+    "Polish": ["ru": "Польский", "uz": "Polyakcha"],
+    "Czech": ["ru": "Чешский", "uz": "Chexcha"],
+    "Slovak": ["ru": "Словацкий", "uz": "Slovakcha"],
+    "Slovenian": ["ru": "Словенский", "uz": "Slovencha"],
+    "Croatian": ["ru": "Хорватский", "uz": "Xorvatcha"],
+    "Bosnian": ["ru": "Боснийский", "uz": "Bosniyacha"],
+    "Russian": ["ru": "Русский", "uz": "Ruscha"],
+    "Ukrainian": ["ru": "Украинский", "uz": "Ukraincha"],
+    "Belarusian": ["ru": "Белорусский", "uz": "Belaruscha"],
+    "Bulgarian": ["ru": "Болгарский", "uz": "Bolgarcha"],
+    "Serbian": ["ru": "Сербский", "uz": "Serbcha"],
+    // History limits
+    "Last 1": ["ru": "Последняя 1", "uz": "Oxirgi 1"],
+    "Last 5": ["ru": "Последние 5", "uz": "Oxirgi 5"],
+    "Last 10": ["ru": "Последние 10", "uz": "Oxirgi 10"],
+]
+
+/// Returns the localized form of an English UI string.
+func L(_ english: String) -> String {
+    let code = resolvedUILanguageCode(Settings.shared.uiLanguage)
+    guard code != "en" else { return english }
+    return UI_TRANSLATIONS[english]?[code] ?? english
+}
+
 enum SpeechModelProfile: String, CaseIterable {
     case multilingualV3 = "multilingual_v3"
     // Deprecated production option. Kept only so old saved preferences
@@ -2180,7 +2388,7 @@ enum SPEAKEXAgentService {
     private static func writeStoppedState() {
         AgentRuntimeStateStore.write(
             AgentRuntimeState(status: "stopped",
-                              detail: "Dictation service is stopped.",
+                              detail: L("Dictation service is stopped."),
                               updatedAt: Date().timeIntervalSince1970,
                               pid: 0,
                               isReady: false,
@@ -2341,6 +2549,7 @@ final class Settings: @unchecked Sendable {
     private static let keyTranscriptCorrections = "transcript_corrections"
     private static let keyTranscriptCorrectionsSyncFile = "transcript_corrections_sync_file"
     private static let keyDictationLanguage = "dictation_language"
+    private static let keyUILanguage = "ui_language"
     private static let keySpeechModelProfile = "speech_model_profile"
     private static let keyInitialSpeechModelChoiceRequired = "initial_speech_model_choice_required"
     private static let keyRemoveFillerWords = "remove_filler_words"
@@ -2808,6 +3017,17 @@ final class Settings: @unchecked Sendable {
             return .auto
         }
         set { defaults.set(newValue.rawValue, forKey: Self.keyDictationLanguage) }
+    }
+
+    var uiLanguage: UILanguage {
+        get {
+            if let v = defaults.string(forKey: Self.keyUILanguage),
+               let lang = UILanguage(rawValue: v) {
+                return lang
+            }
+            return .system
+        }
+        set { defaults.set(newValue.rawValue, forKey: Self.keyUILanguage) }
     }
 
     var speechModelProfile: SpeechModelProfile {
@@ -8377,7 +8597,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var startupTask: Task<Void, Never>?
     private var updateCheckLoopTask: Task<Void, Never>?
     private var manualUpdateCheckTask: Task<Void, Never>?
-    private var startupStatusTitle = "Loading speech model…"
+    private var startupStatusTitle = L("Loading speech model…")
     private var speechModelStartupProgressFraction: Double?
     private var startupFailure: StartupFailure?
     private var didTouchAudioEngine = false
@@ -8653,7 +8873,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         isTerminating = true
-        publishAgentState(status: "stopping", detail: "Dictation service is stopping.")
+        publishAgentState(status: "stopping", detail: L("Dictation service is stopping."))
         settings.hasActiveRunMarker = false
         startupTask?.cancel()
         startupTask = nil
@@ -8812,16 +9032,16 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 guard !Task.isCancelled, !isTerminating else { return }
 
                 stage = .audioInput
-                startupStatusTitle = "Starting audio input…"
+                startupStatusTitle = L("Starting audio input…")
                 rebuildMenu()
 
                 try await startAudioInputWithRetries(reason: reason,
-                                                     initialStatusTitle: "Starting audio input…")
+                                                     initialStatusTitle: L("Starting audio input…"))
                 guard !Task.isCancelled, !isTerminating else { return }
 
                 isCoreRuntimeReady = true
                 startupFailure = nil
-                startupStatusTitle = "Finishing setup…"
+                startupStatusTitle = L("Finishing setup…")
                 completeReadinessIfPossible(reason: reason)
             } catch {
                 guard !Task.isCancelled, !isTerminating else { return }
@@ -8835,7 +9055,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard !pendingURLs.isEmpty else { return }
 
         settings.refreshFromDisk()
-        startupStatusTitle = "Recovering interrupted dictation…"
+        startupStatusTitle = L("Recovering interrupted dictation…")
         rebuildMenu()
         log("pending dictation recovery: \(pendingURLs.count) recording(s) found")
 
@@ -8898,7 +9118,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         shouldResumeRuntimeAfterWake = false
         didLogDeferredWakeRecovery = false
         startupFailure = nil
-        startupStatusTitle = "Loading speech model…"
+        startupStatusTitle = L("Loading speech model…")
         speechModelStartupProgressFraction = nil
 
         hotkey.onPress = nil
@@ -9158,7 +9378,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                                                      initialStatusTitle: "Restarting audio input…")
                 guard !isTerminating else { return }
                 isCoreRuntimeReady = true
-                startupStatusTitle = "Finishing setup…"
+                startupStatusTitle = L("Finishing setup…")
                 completeReadinessIfPossible(reason: reason)
             } catch {
                 guard !isTerminating else { return }
@@ -11469,29 +11689,31 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func agentStateStatusDetail() -> (status: String, detail: String) {
         if isRecording {
-            return ("recording", "Recording dictation.")
+            return ("recording", L("Recording dictation."))
         }
         if isBusy {
-            return ("transcribing", "Transcribing your last recording.")
+            return ("transcribing", L("Transcribing your last recording."))
         }
         if isReady {
-            let verb = settings.triggerMode == .hold ? "Hold" : "Press"
-            return ("ready", "\(verb) \(hotkey.hotkey.name) to dictate.")
+            let template = settings.triggerMode == .hold
+                ? L("Hold %@ to dictate.")
+                : L("Press %@ to dictate.")
+            return ("ready", String(format: template, hotkey.hotkey.name))
         }
         if let failure = startupFailure {
             return ("error", failure.detail)
         }
         let missing = missingPermissions()
         if !missing.isEmpty {
-            return ("needs_permissions", "Grant \(missing.map(\.rawValue).joined(separator: ", ")) to finish setup.")
+            return ("needs_permissions", String(format: L("Grant %@ to finish setup."), missing.map { L($0.rawValue) }.joined(separator: ", ")))
         }
         if startupTask != nil || isRestartingAudioInput || isSwitchingSpeechModel {
             return ("starting", startupStatusTitle)
         }
         if isCoreRuntimeReady {
-            return ("starting", "Starting hotkey listener.")
+            return ("starting", L("Starting hotkey listener."))
         }
-        return ("starting", "Starting dictation service.")
+        return ("starting", L("Starting dictation service."))
     }
 
     private func buildMenu() -> NSMenu {
@@ -11513,7 +11735,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         menu.addItem(.separator())
 
         if isRecording {
-            let cancel = NSMenuItem(title: "Cancel Recording",
+            let cancel = NSMenuItem(title: L("Cancel Recording"),
                                     action: #selector(cancelRecordingClicked(_:)),
                                     keyEquivalent: "")
             cancel.target = self
@@ -11550,7 +11772,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // hide transcript preview text inside the submenu so the menu
         // stays stable even after long dictations.
         if let newest = visibleHistory.first {
-            let inline = NSMenuItem(title: "Copy Last Transcript",
+            let inline = NSMenuItem(title: L("Copy Last Transcript"),
                                     action: #selector(historyClicked(_:)),
                                     keyEquivalent: "")
             inline.target = self
@@ -11575,7 +11797,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // in the menu that gets such an indicator — every other row
         // sits flush against the left edge. The wrapper produces the
         // identical behaviour with no auto-glyph.
-        let quit = NSMenuItem(title: "Quit SPEAKEX",
+        let quit = NSMenuItem(title: L("Quit SPEAKEX"),
                               action: #selector(quitClicked(_:)),
                               keyEquivalent: "q")
         quit.target = self
@@ -11584,7 +11806,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func buildRecentTranscriptsItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: "Recent Transcripts", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: L("Recent Transcripts"), action: nil, keyEquivalent: "")
         let sub = NSMenu()
         sub.autoenablesItems = false
 
@@ -11600,7 +11822,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         sub.addItem(.separator())
 
-        let clear = NSMenuItem(title: "Clear Recent Transcripts",
+        let clear = NSMenuItem(title: L("Clear Recent Transcripts"),
                                action: #selector(clearHistoryClicked(_:)),
                                keyEquivalent: "")
         clear.target = self
@@ -11611,11 +11833,11 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func buildSupportItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: "Support", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: L("Support"), action: nil, keyEquivalent: "")
         let sub = NSMenu()
         sub.autoenablesItems = false
 
-        let setup = NSMenuItem(title: "Setup Checklist…",
+        let setup = NSMenuItem(title: L("Setup Checklist…"),
                                action: #selector(showSetupChecklistClicked(_:)),
                                keyEquivalent: "")
         setup.target = self
@@ -11623,7 +11845,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         sub.addItem(.separator())
 
-        let checkUpdates = NSMenuItem(title: isCheckingForUpdates ? "Checking for Updates…" : "Check for Updates…",
+        let checkUpdates = NSMenuItem(title: isCheckingForUpdates ? L("Checking for Updates…") : L("Check for Updates…"),
                                       action: #selector(checkForUpdatesClicked(_:)),
                                       keyEquivalent: "")
         checkUpdates.target = self
@@ -11632,7 +11854,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         sub.addItem(.separator())
 
-        let about = NSMenuItem(title: "About SPEAKEX",
+        let about = NSMenuItem(title: L("About SPEAKEX"),
                                action: #selector(showAboutClicked(_:)),
                                keyEquivalent: "")
         about.target = self
@@ -11640,19 +11862,19 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         sub.addItem(.separator())
 
-        let diagnostics = NSMenuItem(title: "Copy Diagnostics",
+        let diagnostics = NSMenuItem(title: L("Copy Diagnostics"),
                                      action: #selector(copyDiagnosticsClicked(_:)),
                                      keyEquivalent: "")
         diagnostics.target = self
         sub.addItem(diagnostics)
 
-        let saveDiagnostics = NSMenuItem(title: "Save Diagnostics…",
+        let saveDiagnostics = NSMenuItem(title: L("Save Diagnostics…"),
                                          action: #selector(saveDiagnosticsClicked(_:)),
                                          keyEquivalent: "")
         saveDiagnostics.target = self
         sub.addItem(saveDiagnostics)
 
-        let resetModel = NSMenuItem(title: isResettingSpeechModelCache ? "Resetting Speech Model Cache…" : "Reset Speech Model Cache…",
+        let resetModel = NSMenuItem(title: isResettingSpeechModelCache ? L("Resetting Speech Model Cache…") : L("Reset Speech Model Cache…"),
                                     action: #selector(resetSpeechModelCacheClicked(_:)),
                                     keyEquivalent: "")
         resetModel.target = self
@@ -11662,7 +11884,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             && startupTask == nil
             && !isResettingSpeechModelCache
             && !isSwitchingSpeechModel
-        resetModel.toolTip = "Delete the speech model cache and download a fresh verified copy."
+        resetModel.toolTip = L("Delete the speech model cache and download a fresh verified copy.")
         sub.addItem(resetModel)
 
         parent.submenu = sub
@@ -11702,15 +11924,16 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func menuStatusTitle() -> String {
         if isRecording {
-            return "Recording..."
+            return L("Recording...")
         }
         if isBusy {
-            return "Transcribing..."
+            return L("Transcribing...")
         }
         if isReady {
-            let hk = hotkey.hotkey.name
-            let verb = settings.triggerMode == .hold ? "Hold" : "Press"
-            return "\(verb) \(hk) to dictate"
+            let template = settings.triggerMode == .hold
+                ? L("Hold %@ to dictate")
+                : L("Press %@ to dictate")
+            return String(format: template, hotkey.hotkey.name)
         }
         if let failure = startupFailure {
             return failure.statusTitle
@@ -11719,12 +11942,12 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return startupStatusTitle
         }
         if !missingPermissions().isEmpty {
-            return "Grant permissions to finish setup"
+            return L("Grant permissions to finish setup")
         }
         if isCoreRuntimeReady {
-            return "Starting hotkey listener…"
+            return L("Starting hotkey listener…")
         }
-        return "SPEAKEX is not ready"
+        return L("SPEAKEX is not ready")
     }
 
     private func diagnosticsText() -> String {
@@ -12197,9 +12420,9 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             // First click already happened; permission still denied,
             // so signal explicitly that a second click will reset
             // any stuck TCC state and re-request.
-            title = "⚠ Grant \(p.rawValue) (try again — will reset stuck state)…"
+            title = String(format: L("⚠ Grant %@ (try again — will reset stuck state)…"), L(p.rawValue))
         } else {
-            title = "⚠ Grant \(p.rawValue) permission…"
+            title = String(format: L("⚠ Grant %@ permission…"), L(p.rawValue))
         }
         let item = NSMenuItem(title: title,
                               action: #selector(grantPermissionClicked(_:)),
@@ -12254,7 +12477,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // MARK: - Settings submenu
 
     private func buildSettingsItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: "Settings", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: L("Settings"), action: nil, keyEquivalent: "")
         let sub = NSMenu()
         sub.autoenablesItems = false
 
@@ -12267,7 +12490,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func buildDictationSettingsItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: "Dictation", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: L("Dictation"), action: nil, keyEquivalent: "")
         let sub = NSMenu()
         sub.autoenablesItems = false
 
@@ -12281,7 +12504,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func buildTextSettingsItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: "Text", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: L("Text"), action: nil, keyEquivalent: "")
         let sub = NSMenu()
         sub.autoenablesItems = false
 
@@ -12289,7 +12512,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         sub.addItem(buildRecentTranscriptLimitSettingsItem())
         sub.addItem(buildCorrectionsItem())
 
-        let filler = NSMenuItem(title: "Remove filler words (um, uh, ah, er, hmm)",
+        let filler = NSMenuItem(title: L("Remove filler words (um, uh, ah, er, hmm)"),
                                 action: #selector(toggleRemoveFillerWords(_:)),
                                 keyEquivalent: "")
         filler.target = self
@@ -12301,48 +12524,48 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func buildBehaviorSettingsItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: "Behavior", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: L("Behavior"), action: nil, keyEquivalent: "")
         let sub = NSMenu()
         sub.autoenablesItems = false
 
-        let waveform = NSMenuItem(title: "Show recording waveform",
+        let waveform = NSMenuItem(title: L("Show recording waveform"),
                                   action: #selector(toggleRecordingWaveform(_:)),
                                   keyEquivalent: "")
         waveform.target = self
         waveform.state = settings.showRecordingWaveform ? .on : .off
         sub.addItem(waveform)
 
-        let optionCommandEnter = NSMenuItem(title: "Option+Command sends Enter",
+        let optionCommandEnter = NSMenuItem(title: L("Option+Command sends Enter"),
                                             action: #selector(toggleOptionCommandEnter(_:)),
                                             keyEquivalent: "")
         optionCommandEnter.target = self
         optionCommandEnter.state = settings.optionCommandEnterAfterDictation ? .on : .off
-        optionCommandEnter.toolTip = "Off: plain Right Command sends Enter; Option+Command finishes without Enter."
+        optionCommandEnter.toolTip = L("On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter.")
         sub.addItem(optionCommandEnter)
 
-        let mute = NSMenuItem(title: "Mute system audio while recording",
+        let mute = NSMenuItem(title: L("Mute system audio while recording"),
                               action: #selector(toggleMute(_:)),
                               keyEquivalent: "")
         mute.target = self
         mute.state = settings.muteWhileRecording ? .on : .off
         sub.addItem(mute)
 
-        let sounds = NSMenuItem(title: "Play feedback sounds",
+        let sounds = NSMenuItem(title: L("Play feedback sounds"),
                                 action: #selector(toggleFeedbackSounds(_:)),
                                 keyEquivalent: "")
         sounds.target = self
         sounds.state = settings.playFeedbackSounds ? .on : .off
         sub.addItem(sounds)
 
-        let automaticUpdates = NSMenuItem(title: "Automatically check for updates",
+        let automaticUpdates = NSMenuItem(title: L("Automatically check for updates"),
                                           action: #selector(toggleCheckForUpdates(_:)),
                                           keyEquivalent: "")
         automaticUpdates.target = self
         automaticUpdates.state = settings.checkForUpdates ? .on : .off
-        automaticUpdates.toolTip = "Periodically checks GitHub for a newer release and only notifies you."
+        automaticUpdates.toolTip = L("Periodically checks GitHub for a newer release and only notifies you.")
         sub.addItem(automaticUpdates)
 
-        let launchAtLogin = NSMenuItem(title: "Launch at Login",
+        let launchAtLogin = NSMenuItem(title: L("Launch at Login"),
                                        action: #selector(toggleLaunchAtLogin(_:)),
                                        keyEquivalent: "")
         launchAtLogin.target = self
@@ -12351,25 +12574,52 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             launchAtLogin.state = .on
         case .requiresApproval:
             launchAtLogin.state = .mixed
-            launchAtLogin.toolTip = "Approve SPEAKEX in System Settings → General → Login Items."
+            launchAtLogin.toolTip = L("Approve SPEAKEX in System Settings → General → Login Items.")
         default:
             launchAtLogin.state = .off
         }
         sub.addItem(launchAtLogin)
 
-        let dock = NSMenuItem(title: "Show SPEAKEX in Dock",
+        let dock = NSMenuItem(title: L("Show SPEAKEX in Dock"),
                               action: #selector(toggleDock(_:)),
                               keyEquivalent: "")
         dock.target = self
         dock.state = settings.showInDock ? .on : .off
         sub.addItem(dock)
 
+        sub.addItem(.separator())
+        sub.addItem(buildInterfaceLanguageItem())
+
         parent.submenu = sub
         return parent
     }
 
+    private func buildInterfaceLanguageItem() -> NSMenuItem {
+        let parent = NSMenuItem(title: L("Interface Language"), action: nil, keyEquivalent: "")
+        let sub = NSMenu()
+        sub.autoenablesItems = false
+        for language in UILanguage.allCases {
+            let item = NSMenuItem(title: language.displayName,
+                                  action: #selector(selectUILanguage(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            item.state = (language == settings.uiLanguage) ? .on : .off
+            item.representedObject = language.rawValue
+            sub.addItem(item)
+        }
+        parent.submenu = sub
+        return parent
+    }
+
+    @objc private func selectUILanguage(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let language = UILanguage(rawValue: raw) else { return }
+        settings.uiLanguage = language
+        rebuildMenu()
+    }
+
     private func buildHotkeySettingsItem() -> NSMenuItem {
-        let hkParent = NSMenuItem(title: "Hotkey", action: nil, keyEquivalent: "")
+        let hkParent = NSMenuItem(title: L("Hotkey"), action: nil, keyEquivalent: "")
         let hkSub = NSMenu()
         hkSub.autoenablesItems = false
         let current = hotkey.hotkey
@@ -12379,7 +12629,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                                          action: nil,
                                          keyEquivalent: "")
             currentItem.state = .on
-            currentItem.toolTip = "Recorded custom hotkey"
+            currentItem.toolTip = L("Recorded custom hotkey")
             hkSub.addItem(currentItem)
             hkSub.addItem(.separator())
         }
@@ -12396,14 +12646,14 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         hkSub.addItem(.separator())
 
-        let record = NSMenuItem(title: "Record Hotkey…",
+        let record = NSMenuItem(title: L("Record Hotkey…"),
                                 action: #selector(recordHotkeyClicked(_:)),
                                 keyEquivalent: "")
         record.target = self
         record.isEnabled = !isRecording && !isBusy && !isTerminating
         hkSub.addItem(record)
 
-        let reset = NSMenuItem(title: "Reset Hotkey to Default",
+        let reset = NSMenuItem(title: L("Reset Hotkey to Default"),
                                action: #selector(resetHotkeyClicked(_:)),
                                keyEquivalent: "")
         reset.target = self
@@ -12411,7 +12661,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             && !isRecording
             && !isBusy
             && !isTerminating
-        reset.toolTip = "Use Right Option for dictation."
+        reset.toolTip = L("Use Right Option for dictation.")
         hkSub.addItem(reset)
 
         hkParent.submenu = hkSub
@@ -12419,11 +12669,11 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func buildTriggerSettingsItem() -> NSMenuItem {
-        let tmParent = NSMenuItem(title: "Trigger", action: nil, keyEquivalent: "")
+        let tmParent = NSMenuItem(title: L("Trigger"), action: nil, keyEquivalent: "")
         let tmSub = NSMenu()
         tmSub.autoenablesItems = false
         for mode in [TriggerMode.hold, .toggle] {
-            let item = NSMenuItem(title: TRIGGER_DISPLAY[mode] ?? mode.rawValue,
+            let item = NSMenuItem(title: L(TRIGGER_DISPLAY[mode] ?? mode.rawValue),
                                   action: #selector(selectTriggerMode(_:)),
                                   keyEquivalent: "")
             item.target = self
@@ -12436,11 +12686,11 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func buildDictationLanguageSettingsItem() -> NSMenuItem {
-        let langParent = NSMenuItem(title: "Language Hint", action: nil, keyEquivalent: "")
+        let langParent = NSMenuItem(title: L("Language Hint"), action: nil, keyEquivalent: "")
         let langSub = NSMenu()
         langSub.autoenablesItems = false
         for lang in DictationLanguage.allCases {
-            let item = NSMenuItem(title: DICTATION_LANGUAGE_DISPLAY[lang] ?? lang.rawValue,
+            let item = NSMenuItem(title: L(DICTATION_LANGUAGE_DISPLAY[lang] ?? lang.rawValue),
                                   action: #selector(selectDictationLanguage(_:)),
                                   keyEquivalent: "")
             item.target = self
@@ -12459,11 +12709,11 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func buildPasteSuffixSettingsItem() -> NSMenuItem {
-        let pasteParent = NSMenuItem(title: "After Pasting", action: nil, keyEquivalent: "")
+        let pasteParent = NSMenuItem(title: L("After Pasting"), action: nil, keyEquivalent: "")
         let pasteSub = NSMenu()
         pasteSub.autoenablesItems = false
         for suffix in [PasteSuffix.appendSpace, .none, .appendNewline] {
-            let item = NSMenuItem(title: PASTE_SUFFIX_DISPLAY[suffix] ?? suffix.rawValue,
+            let item = NSMenuItem(title: L(PASTE_SUFFIX_DISPLAY[suffix] ?? suffix.rawValue),
                                   action: #selector(selectPasteSuffix(_:)),
                                   keyEquivalent: "")
             item.target = self
@@ -12476,11 +12726,11 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func buildRecentTranscriptLimitSettingsItem() -> NSMenuItem {
-        let recentParent = NSMenuItem(title: "Recent Transcripts", action: nil, keyEquivalent: "")
+        let recentParent = NSMenuItem(title: L("Recent Transcripts"), action: nil, keyEquivalent: "")
         let recentSub = NSMenu()
         recentSub.autoenablesItems = false
         for limit in RecentTranscriptLimit.allCases {
-            let item = NSMenuItem(title: RECENT_TRANSCRIPT_LIMIT_DISPLAY[limit] ?? limit.rawValue,
+            let item = NSMenuItem(title: L(RECENT_TRANSCRIPT_LIMIT_DISPLAY[limit] ?? limit.rawValue),
                                   action: #selector(selectRecentTranscriptLimit(_:)),
                                   keyEquivalent: "")
             item.target = self
@@ -12498,7 +12748,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let savedPreference = isDefaultAggregateAudioInputPreference(rawSavedPreference) ? "" : rawSavedPreference
         let selectedDevice = audioInputDevice(matching: savedPreference, in: devices)
         let canSwitch = !isRecording && !isBusy && !isTerminating
-        let parent = NSMenuItem(title: "Microphone", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: L("Microphone"), action: nil, keyEquivalent: "")
         if !savedPreference.isEmpty && selectedDevice == nil {
             parent.toolTip = savedPreference
         }
@@ -12506,7 +12756,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let sub = NSMenu()
         sub.autoenablesItems = false
 
-        let system = NSMenuItem(title: "System default",
+        let system = NSMenuItem(title: L("System default"),
                                 action: #selector(selectInputDevice(_:)),
                                 keyEquivalent: "")
         system.target = self
@@ -12516,7 +12766,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         sub.addItem(system)
 
         if !savedPreference.isEmpty && selectedDevice == nil {
-            let unavailable = NSMenuItem(title: "Unavailable: \(savedPreference)",
+            let unavailable = NSMenuItem(title: String(format: L("Unavailable: %@"), savedPreference),
                                          action: nil,
                                          keyEquivalent: "")
             unavailable.isEnabled = false
@@ -12687,12 +12937,12 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func buildCorrectionsItem() -> NSMenuItem {
         let corrections = settings.transcriptCorrections
-        let title = corrections.isEmpty ? "Text Corrections" : "Text Corrections (\(corrections.count))"
+        let title = corrections.isEmpty ? L("Text Corrections") : String(format: L("Text Corrections (%d)"), corrections.count)
         let parent = NSMenuItem(title: title, action: nil, keyEquivalent: "")
         let sub = NSMenu()
         sub.autoenablesItems = false
 
-        let add = NSMenuItem(title: "Add Correction…",
+        let add = NSMenuItem(title: L("Add Correction…"),
                              action: #selector(addCorrectionClicked(_:)),
                              keyEquivalent: "")
         add.target = self
@@ -13637,14 +13887,14 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         showAppForModal()
 
         let alert = NSAlert()
-        alert.messageText = "Record Hotkey"
-        alert.informativeText = "Press a right-side modifier key or an F-key."
-        alert.addButton(withTitle: "Use Selected")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = L("Record Hotkey")
+        alert.informativeText = L("Press a right-side modifier key or an F-key.")
+        alert.addButton(withTitle: L("Use Selected"))
+        alert.addButton(withTitle: L("Cancel"))
         let useButton = alert.buttons[0]
         useButton.isEnabled = false
 
-        let status = NSTextField(labelWithString: "Waiting for key…")
+        let status = NSTextField(labelWithString: L("Waiting for key…"))
         status.font = .systemFont(ofSize: 13)
         status.textColor = .secondaryLabelColor
         status.lineBreakMode = .byWordWrapping
@@ -18243,7 +18493,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             do {
                 try SPEAKEXAgentService.installAndStart()
             } catch {
-                showError(title: "Couldn't Start Dictation Service", detail: error.localizedDescription)
+                showError(title: L("Couldn't Start Dictation Service"), detail: error.localizedDescription)
             }
         }
         showWindow()
@@ -18318,46 +18568,51 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         root.translatesAutoresizingMaskIntoConstraints = false
 
         let title = panelLabel("SPEAKEX", size: 24, weight: .semibold)
-        let subtitle = panelLabel("Control panel. Closing this window does not stop dictation.",
+        let subtitle = panelLabel(L("Control panel. Closing this window does not stop dictation."),
                                   size: 13,
                                   color: .secondaryLabelColor)
         root.addArrangedSubview(title)
         root.addArrangedSubview(subtitle)
         root.addArrangedSubview(separator())
 
-        root.addArrangedSubview(sectionLabel("Service"))
+        root.addArrangedSubview(sectionLabel(L("Service")))
         root.addArrangedSubview(serviceStatusView())
         root.addArrangedSubview(serviceButtonsView())
 
         root.addArrangedSubview(separator())
-        root.addArrangedSubview(sectionLabel("Permissions"))
+        root.addArrangedSubview(sectionLabel(L("Permissions")))
         for permission in Permission.allCases {
             root.addArrangedSubview(permissionRow(permission))
         }
 
         root.addArrangedSubview(separator())
-        root.addArrangedSubview(sectionLabel("Settings"))
-        root.addArrangedSubview(infoRow(title: "Dictation key",
-                                        detail: "\(hotkeyChoice(forKeycode: settings.hotkeyKeycode).name), \(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue.lowercased())"))
-        root.addArrangedSubview(checkboxRow(title: "Option + Command sends Enter",
-                                            detail: "Off: plain Right Command sends Enter, and Option + Command finishes without Enter.",
+        root.addArrangedSubview(sectionLabel(L("Settings")))
+        root.addArrangedSubview(infoRow(title: L("Dictation key"),
+                                        detail: "\(hotkeyChoice(forKeycode: settings.hotkeyKeycode).name), \(L(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue.lowercased()))"))
+        root.addArrangedSubview(checkboxRow(title: L("Option + Command sends Enter"),
+                                            detail: L("On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter."),
                                             isOn: settings.optionCommandEnterAfterDictation,
                                             action: #selector(toggleOptionCommandEnterClicked(_:))))
-        root.addArrangedSubview(popupRow(title: "Recording color",
-                                         detail: "Color used while the microphone is listening.",
+        root.addArrangedSubview(popupRow(title: L("Recording color"),
+                                         detail: L("Color used while the microphone is listening."),
                                          selectedValue: settings.recordingHUDRecordingColor.rawValue,
-                                         options: RecordingHUDAccentColor.allCases.map { ($0.displayName, $0.rawValue) },
+                                         options: RecordingHUDAccentColor.allCases.map { (L($0.displayName), $0.rawValue) },
                                          action: #selector(selectRecordingHUDRecordingColor(_:))))
-        root.addArrangedSubview(popupRow(title: "Transcribing color",
-                                         detail: "Color used while speech is being converted to text.",
+        root.addArrangedSubview(popupRow(title: L("Transcribing color"),
+                                         detail: L("Color used while speech is being converted to text."),
                                          selectedValue: settings.recordingHUDTranscribingColor.rawValue,
-                                         options: RecordingHUDAccentColor.allCases.map { ($0.displayName, $0.rawValue) },
+                                         options: RecordingHUDAccentColor.allCases.map { (L($0.displayName), $0.rawValue) },
                                          action: #selector(selectRecordingHUDTranscribingColor(_:))))
-        root.addArrangedSubview(popupRow(title: "HUD background",
-                                         detail: "Capsule background follows the system appearance or stays fixed.",
+        root.addArrangedSubview(popupRow(title: L("HUD background"),
+                                         detail: L("Capsule background follows the system appearance or stays fixed."),
                                          selectedValue: settings.recordingHUDBackgroundStyle.rawValue,
-                                         options: RecordingHUDBackgroundStyle.allCases.map { ($0.displayName, $0.rawValue) },
+                                         options: RecordingHUDBackgroundStyle.allCases.map { (L($0.displayName), $0.rawValue) },
                                          action: #selector(selectRecordingHUDBackgroundStyle(_:))))
+        root.addArrangedSubview(popupRow(title: L("Interface language"),
+                                         detail: L("Language of the SPEAKEX menus and panel."),
+                                         selectedValue: settings.uiLanguage.rawValue,
+                                         options: UILanguage.allCases.map { ($0.displayName, $0.rawValue) },
+                                         action: #selector(selectUILanguageClicked(_:))))
 
         let container = NSView()
         container.addSubview(root)
@@ -18389,18 +18644,18 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             detailText = state.detail
             color = colorForStatus(state.status)
         } else if running {
-            statusText = "Starting"
-            detailText = "Dictation service is launching."
+            statusText = L("Starting")
+            detailText = L("Dictation service is launching.")
             color = .systemOrange
         } else {
-            statusText = settings.agentEnabled ? "Stopped" : "Off"
+            statusText = settings.agentEnabled ? L("Stopped") : L("Off")
             detailText = settings.agentEnabled
-                ? "Right Command dictation is off until the service is started."
-                : "Dictation service is off. Press Start to turn it back on."
+                ? L("Dictation is off until the service is started.")
+                : L("Dictation service is off. Press Start to turn it back on.")
             color = settings.agentEnabled ? .systemRed : .secondaryLabelColor
         }
 
-        return statusRow(title: "Dictation service",
+        return statusRow(title: L("Dictation service"),
                          detail: detailText,
                          status: statusText,
                          statusColor: color)
@@ -18411,20 +18666,20 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 8
-        row.addArrangedSubview(panelButton("Start", action: #selector(startAgentClicked(_:))))
-        row.addArrangedSubview(panelButton("Restart", action: #selector(restartAgentClicked(_:))))
-        row.addArrangedSubview(panelButton("Stop", action: #selector(stopAgentClicked(_:))))
+        row.addArrangedSubview(panelButton(L("Start"), action: #selector(startAgentClicked(_:))))
+        row.addArrangedSubview(panelButton(L("Restart"), action: #selector(restartAgentClicked(_:))))
+        row.addArrangedSubview(panelButton(L("Stop"), action: #selector(stopAgentClicked(_:))))
         row.addArrangedSubview(NSView())
-        row.addArrangedSubview(panelButton("Close Panel", action: #selector(closePanelClicked(_:))))
+        row.addArrangedSubview(panelButton(L("Close Panel"), action: #selector(closePanelClicked(_:))))
         return row
     }
 
     private func permissionRow(_ permission: Permission) -> NSView {
         let granted = Permissions.isGranted(permission)
-        let buttonTitle = granted ? nil : ((permissionClickCount[permission] ?? 0) >= 1 ? "Try Again" : "Grant")
-        return statusRow(title: permission.rawValue,
+        let buttonTitle = granted ? nil : ((permissionClickCount[permission] ?? 0) >= 1 ? L("Try Again") : L("Grant"))
+        return statusRow(title: L(permission.rawValue),
                          detail: permissionDetail(permission),
-                         status: granted ? "Granted" : "Missing",
+                         status: granted ? L("Granted") : L("Missing"),
                          statusColor: granted ? .systemGreen : .systemOrange,
                          buttonTitle: buttonTitle,
                          action: granted ? nil : #selector(grantPermissionClicked(_:)),
@@ -18570,14 +18825,14 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
 
     private func displayStatus(_ raw: String) -> String {
         switch raw {
-        case "ready": return "Running"
-        case "recording": return "Recording"
-        case "transcribing": return "Transcribing"
-        case "starting": return "Starting"
-        case "needs_permissions": return "Needs Access"
-        case "error": return "Error"
-        case "stopping": return "Stopping"
-        case "stopped": return "Stopped"
+        case "ready": return L("Running")
+        case "recording": return L("Recording")
+        case "transcribing": return L("Transcribing")
+        case "starting": return L("Starting")
+        case "needs_permissions": return L("Needs Access")
+        case "error": return L("Error")
+        case "stopping": return L("Stopping")
+        case "stopped": return L("Stopped")
         default: return raw.capitalized
         }
     }
@@ -18594,11 +18849,11 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     private func permissionDetail(_ permission: Permission) -> String {
         switch permission {
         case .microphone:
-            return "Lets the service hear your voice while dictation is active."
+            return L("Lets the service hear your voice while dictation is active.")
         case .accessibility:
-            return "Lets the service paste the transcript at your cursor."
+            return L("Lets the service paste the transcript at your cursor.")
         case .inputMonitoring:
-            return "Lets the service hear the Right Command shortcut globally."
+            return L("Lets the service see the dictation hotkey globally.")
         }
     }
 
@@ -18607,7 +18862,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         do {
             try SPEAKEXAgentService.installAndStart()
         } catch {
-            showError(title: "Couldn't Start Dictation Service", detail: error.localizedDescription)
+            showError(title: L("Couldn't Start Dictation Service"), detail: error.localizedDescription)
         }
         refresh()
     }
@@ -18617,7 +18872,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         do {
             try SPEAKEXAgentService.restart()
         } catch {
-            showError(title: "Couldn't Restart Dictation Service", detail: error.localizedDescription)
+            showError(title: L("Couldn't Restart Dictation Service"), detail: error.localizedDescription)
         }
         refresh()
     }
@@ -18625,10 +18880,10 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     @objc private func stopAgentClicked(_ sender: NSButton) {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "Stop Dictation Service?"
-        alert.informativeText = "Right Command dictation will stop until you start the service again."
-        alert.addButton(withTitle: "Keep Running")
-        alert.addButton(withTitle: "Stop Service")
+        alert.messageText = L("Stop Dictation Service?")
+        alert.informativeText = L("Dictation will stop until you start the service again.")
+        alert.addButton(withTitle: L("Keep Running"))
+        alert.addButton(withTitle: L("Stop Service"))
         guard alert.runModal() == .alertSecondButtonReturn else { return }
         settings.agentEnabled = false
         SPEAKEXAgentService.stop()
@@ -18662,6 +18917,18 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         guard let raw = sender.selectedItem?.representedObject as? String,
               let style = RecordingHUDBackgroundStyle(rawValue: raw) else { return }
         settings.recordingHUDBackgroundStyle = style
+        refresh()
+    }
+
+    @objc private func selectUILanguageClicked(_ sender: NSPopUpButton) {
+        guard let raw = sender.selectedItem?.representedObject as? String,
+              let language = UILanguage(rawValue: raw) else { return }
+        settings.uiLanguage = language
+        // The agent renders its menu and status text in the same
+        // language; restart it so everything switches at once.
+        if SPEAKEXAgentService.isAgentRunning() {
+            try? SPEAKEXAgentService.restart()
+        }
         refresh()
     }
 
