@@ -175,15 +175,14 @@ let FUNCTION_KEY_NAMES_BY_KEYCODE: [CGKeyCode: String] = [
     90: "F20",
 ]
 
+// Suggested hotkeys are right-side modifiers only: F-keys need Fn on
+// most keyboards and are a stretch to reach, left modifiers clash with
+// ordinary shortcut chords. Anything else remains reachable through
+// Record Hotkey.
 let HOTKEY_CHOICES: [HotkeyChoice] = [
     RIGHT_MODIFIER_HOTKEY_CHOICES[0],
     RIGHT_MODIFIER_HOTKEY_CHOICES[1],
     RIGHT_MODIFIER_HOTKEY_CHOICES[2],
-    HotkeyChoice(name: "F5",            keycode: 96,  isModifier: false, modifierFlag: nil),
-    HotkeyChoice(name: "F6",            keycode: 97,  isModifier: false, modifierFlag: nil),
-    HotkeyChoice(name: "F13",           keycode: 105, isModifier: false, modifierFlag: nil),
-    HotkeyChoice(name: "F18",           keycode: 79,  isModifier: false, modifierFlag: nil),
-    HotkeyChoice(name: "F19",           keycode: 80,  isModifier: false, modifierFlag: nil),
 ]
 
 func recordableHotkeyChoice(forKeycode keycode: CGKeyCode) -> HotkeyChoice? {
@@ -18674,16 +18673,6 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             (L("Right Option"), "61"),
             (L("Right Command"), "54"),
             (L("Right Control"), "62"),
-            (L("Left Option (conflicts with ⌥ shortcuts)"), "58"),
-            (L("Left Command (conflicts with ⌘ shortcuts)"), "55"),
-            (L("Left Control (conflicts with ⌃ shortcuts)"), "59"),
-            (L("F5 (needs Fn on laptops)"), "96"),
-            (L("F6 (needs Fn on laptops)"), "97"),
-            (L("F13 (no conflicts)"), "105"),
-            (L("F16 (no conflicts)"), "106"),
-            (L("F17 (no conflicts)"), "64"),
-            (L("F18 (no conflicts)"), "79"),
-            (L("F19 (no conflicts)"), "80"),
         ]
         let currentHotkeyValue = String(Int(settings.hotkeyKeycode))
         if !hotkeyOptions.contains(where: { $0.value == currentHotkeyValue }) {
