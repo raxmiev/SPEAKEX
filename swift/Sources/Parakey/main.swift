@@ -3455,7 +3455,13 @@ private struct HotkeyTransitionState {
             return transitionEscape(for: event, isRecording: isRecording)
         }
 
-        if let chord = transitionEnterChord(for: event,
+        // The Option+Command enter chord watches solo Right Option
+        // presses while recording (waiting for Command to join), which
+        // would swallow the toggle-stop press when Right Option IS the
+        // hotkey. The chord and that hotkey can't coexist, so the
+        // chord is disabled for it.
+        if hotkey.keycode != RIGHT_OPTION_KEYCODE,
+           let chord = transitionEnterChord(for: event,
                                             isRecording: isRecording) {
             return chord
         }
@@ -14889,6 +14895,7 @@ private enum ParakeySelfTest {
         try testHandledHotkeySuppression()
         try testFKeyAutoRepeatSuppressesWithoutAction()
         try testRightModifierReleaseWithLeftFlagStillSet()
+        try testRightOptionHotkeyToggleStopsOnSecondPress()
         try testHistoryChordShowsOverlay()
         try testOptionCommandEnterChordStopsWithEnter()
         try testEnterShortcutModeSelection()
@@ -17969,6 +17976,43 @@ private enum ParakeySelfTest {
                                     isRecording: true),
             equals: HotkeyTransitionResult(suppress: true, actions: [.release]),
             "right command after the history chord should still stop active dictation"
+        )
+    }
+
+    private static func testRightOptionHotkeyToggleStopsOnSecondPress() throws {
+        let rightOption = hotkeyChoice(forKeycode: RIGHT_OPTION_KEYCODE)
+        let alternate = CGEventFlags.maskAlternate.rawValue
+
+        var state = HotkeyTransitionState()
+        try expect(
+            state.transition(for: event(.flagsChanged,
+                                        keycode: RIGHT_OPTION_KEYCODE,
+                                        flags: alternate),
+                             hotkey: rightOption,
+                             triggerMode: .toggle,
+                             isRecording: false),
+            equals: HotkeyTransitionResult(suppress: true, actions: [.press]),
+            "right option press should start toggle dictation when it is the hotkey"
+        )
+        try expect(
+            state.transition(for: event(.flagsChanged,
+                                        keycode: RIGHT_OPTION_KEYCODE,
+                                        flags: 0),
+                             hotkey: rightOption,
+                             triggerMode: .toggle,
+                             isRecording: true),
+            equals: .suppressOnly,
+            "right option release should be a no-op in toggle mode"
+        )
+        try expect(
+            state.transition(for: event(.flagsChanged,
+                                        keycode: RIGHT_OPTION_KEYCODE,
+                                        flags: alternate),
+                             hotkey: rightOption,
+                             triggerMode: .toggle,
+                             isRecording: true),
+            equals: HotkeyTransitionResult(suppress: true, actions: [.release]),
+            "second right option press must stop toggle dictation, not arm the enter chord"
         )
     }
 

@@ -1,4 +1,14 @@
-# SuperDictate
+# SPEAKEX
+
+Форк [SuperDictate](https://github.com/shlgd/SuperDictate) (который, в свою
+очередь, основан на [Parakey](https://github.com/rcourtman/parakey)) — быстрая
+локальная диктовка для macOS на Apple Silicon.
+
+Отличия от SuperDictate:
+
+- Исправлен toggle-режим для хоткея «правый Option»: второе нажатие снова
+  останавливает диктовку и вставляет текст (раньше его перехватывала
+  комбинация Option+Command).
 
 ## Быстрая установка
 
