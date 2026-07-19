@@ -19,4 +19,4 @@ grep -q 'com.apple.security.device.audio-input' entitlements.plist
 grep -q 'com.apple.security.device.microphone' entitlements.plist
 
 git diff --check
-printf 'SuperDictate checks passed (v%s).\n' "$app_version"
+printf 'SPEAKEX checks passed (v%s).\n' "$app_version"

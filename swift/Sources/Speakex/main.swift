@@ -1,4 +1,4 @@
-// Parakey — push-to-talk dictation for macOS Apple Silicon.
+// Speakex — push-to-talk dictation for macOS Apple Silicon.
 //
 // Single-file Swift menu-bar app. The whole runtime lives in this
 // file: hotkey capture (`CGEventTap`), audio capture
@@ -56,22 +56,22 @@ let MIN_CLIP_SECONDS: Double = 0.25
 let UPDATE_CHECK_FIRST_DELAY_SECONDS: TimeInterval = 30
 let UPDATE_CHECK_INTERVAL_SECONDS: TimeInterval = 6 * 3600  // 6h
 let UPDATE_REMIND_LATER_SECONDS: TimeInterval = 24 * 3600  // 24h
-let GITHUB_LATEST_RELEASE_URL = URL(string: "https://api.github.com/repos/shlgd/SuperDictate/releases/latest")!
-let GITHUB_REPOSITORY_PAGE = URL(string: "https://github.com/shlgd/SuperDictate")!
-let GITHUB_RELEASES_PAGE = URL(string: "https://github.com/shlgd/SuperDictate/releases/latest")!
-let HOMEBREW_CASK_TAP = "shlgd/superdictate"
-let HOMEBREW_CASK_TOKEN = "shlgd/superdictate/superdictate"
-let HOMEBREW_CASK_INSTALLED_TOKEN = "parakey"
-let INSTALLED_APP_BUNDLE_PATH = "/Applications/SuperDictate.app"
+let GITHUB_LATEST_RELEASE_URL = URL(string: "https://api.github.com/repos/raxmiev/SPEAKEX/releases/latest")!
+let GITHUB_REPOSITORY_PAGE = URL(string: "https://github.com/raxmiev/SPEAKEX")!
+let GITHUB_RELEASES_PAGE = URL(string: "https://github.com/raxmiev/SPEAKEX/releases/latest")!
+let HOMEBREW_CASK_TAP = "raxmiev/speakex"
+let HOMEBREW_CASK_TOKEN = "raxmiev/speakex/speakex"
+let HOMEBREW_CASK_INSTALLED_TOKEN = "speakex"
+let INSTALLED_APP_BUNDLE_PATH = "/Applications/SPEAKEX.app"
 let AGENT_ARGUMENT = "--agent"
-let AGENT_LABEL = "com.local.superdictate.agent"
-let APP_SUPPORT_DIR_NAME = "SuperDictate"
+let AGENT_LABEL = "com.local.speakex.agent"
+let APP_SUPPORT_DIR_NAME = "SPEAKEX"
 let AGENT_STATUS_FILE_NAME = "AgentStatus.json"
 let CONTROL_PANEL_PID_FILE_NAME = "ControlPanel.pid"
 let UPDATE_HELPER_LOG_PATH = (NSHomeDirectory() as NSString)
-    .appendingPathComponent("Library/Logs/SuperDictate-update.log")
+    .appendingPathComponent("Library/Logs/SPEAKEX-update.log")
 let UPDATE_PROGRESS_ARGUMENT = "--update-progress"
-let UPDATE_PROGRESS_APP_PREFIX = "SuperDictate-update-progress-"
+let UPDATE_PROGRESS_APP_PREFIX = "SPEAKEX-update-progress-"
 let MAX_SKIPPED_UPDATE_VERSIONS = 20
 let MAX_CORRECTION_SYNC_PATH_BYTES = 4096
 let MAX_INPUT_DEVICE_PREFERENCE_BYTES = 512
@@ -100,10 +100,10 @@ let AUDIO_IDLE_STOP_DELAY_SECONDS: TimeInterval = 5
 let AUDIO_CONFIGURATION_CHANGE_SUPPRESSION_SECONDS: TimeInterval = 1
 let MODEL_DOWNLOAD_HEADROOM_BYTES: Int64 = 500 * 1024 * 1024
 
-let SETTINGS_SUITE = "com.local.superdictate"
-let CORRECTIONS_FILE_UTI = "com.local.superdictate.corrections"
-let CORRECTIONS_FILE_EXTENSION = "superdictate-corrections"
-let CORRECTIONS_FILE_NAME = "SuperDictate Corrections.\(CORRECTIONS_FILE_EXTENSION)"
+let SETTINGS_SUITE = "com.local.speakex"
+let CORRECTIONS_FILE_UTI = "com.local.speakex.corrections"
+let CORRECTIONS_FILE_EXTENSION = "speakex-corrections"
+let CORRECTIONS_FILE_NAME = "SPEAKEX Corrections.\(CORRECTIONS_FILE_EXTENSION)"
 let MAX_TRANSCRIPT_CORRECTIONS = 512
 let MAX_TRANSCRIPT_CORRECTION_SOURCE_BYTES = 512
 let MAX_TRANSCRIPT_CORRECTION_REPLACEMENT_BYTES = 4096
@@ -351,9 +351,9 @@ enum SpeechModelProfile: String, CaseIterable {
     var cacheResetDetail: String {
         switch self {
         case .multilingualV3:
-            return "Parakey will delete the local Parakeet TDT v3 model cache, unload the current speech model, and download a fresh verified copy before dictation is available again."
+            return "Speakex will delete the local Parakeet TDT v3 model cache, unload the current speech model, and download a fresh verified copy before dictation is available again."
         case .englishUnified:
-            return "Parakey will delete the local Parakeet TDT v3 model cache, unload the current speech model, and download a fresh verified copy before dictation is available again."
+            return "Speakex will delete the local Parakeet TDT v3 model cache, unload the current speech model, and download a fresh verified copy before dictation is available again."
         }
     }
 
@@ -931,7 +931,7 @@ enum TranscriptCorrectionsDocumentError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedSchema(let version):
-            return "This corrections file uses schema version \(version), which this version of Parakey cannot read."
+            return "This corrections file uses schema version \(version), which this version of Speakex cannot read."
         }
     }
 }
@@ -945,7 +945,7 @@ enum TranscriptCorrectionsTransferError: LocalizedError {
         case .fileTooLarge(let bytes, let limit):
             let actual = ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
             let maximum = ByteCountFormatter.string(fromByteCount: Int64(limit), countStyle: .file)
-            return "This corrections file is \(actual), which is larger than Parakey's \(maximum) import limit."
+            return "This corrections file is \(actual), which is larger than Speakex's \(maximum) import limit."
         case .notRegularFile:
             return "The selected corrections path is not a regular file."
         }
@@ -1111,7 +1111,7 @@ enum TranscriptCorrectionsSyncPathError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .isSymbolicLink:
-            return "The text correction sync file is a symbolic link. Parakey refuses to sync through symlinks. Reconnect Parakey to a regular file."
+            return "The text correction sync file is a symbolic link. Speakex refuses to sync through symlinks. Reconnect Speakex to a regular file."
         }
     }
 }
@@ -1144,7 +1144,7 @@ func shouldStopCorrectionSync(afterPathValidationError error: Error) -> Bool {
 // MARK: - Model registry hardening
 //
 // FluidAudio reads REGISTRY_URL and MODEL_REGISTRY_URL from the process
-// environment to override the speech-model download base URL. Parakey
+// environment to override the speech-model download base URL. Speakex
 // does not document either as a feature, so a value here means either
 // (a) a developer is debugging a mirror — uncommon — or (b) a process
 // or LaunchAgent has injected one to redirect first-launch model
@@ -1172,13 +1172,13 @@ func refuseHostileRegistryEnvironmentAndExit() {
     log("refusing to start: registry override env var(s) set: \(names)")
     let alert = NSAlert()
     alert.alertStyle = .critical
-    alert.messageText = "Parakey refused to start"
+    alert.messageText = "Speakex refused to start"
     alert.informativeText = """
-        These environment variable(s) are set in Parakey's process: \(names).
+        These environment variable(s) are set in Speakex's process: \(names).
 
-        FluidAudio uses them to override the speech-model download URL. Parakey does not support this and treats it as a sign that the launch environment has been tampered with.
+        FluidAudio uses them to override the speech-model download URL. Speakex does not support this and treats it as a sign that the launch environment has been tampered with.
 
-        Check ~/Library/LaunchAgents/, your shell rc files, and any parent process. Once the variables are gone, launch Parakey again.
+        Check ~/Library/LaunchAgents/, your shell rc files, and any parent process. Once the variables are gone, launch Speakex again.
         """
     alert.addButton(withTitle: "Quit")
     alert.runModal()
@@ -1188,11 +1188,11 @@ func refuseHostileRegistryEnvironmentAndExit() {
 // MARK: - Speech model integrity
 //
 // FluidAudio owns the Hugging Face download mechanics, but it does not
-// pin the downloaded CoreML bundle contents. Parakey downloads first,
+// pin the downloaded CoreML bundle contents. Speakex downloads first,
 // verifies the files that will be loaded by CoreML, and only then asks
 // FluidAudio to compile/load the models. The manifest is intentionally
 // tied to one upstream repo commit; a legitimate upstream model change
-// should arrive as an explicit Parakey update with refreshed hashes.
+// should arrive as an explicit Speakex update with refreshed hashes.
 
 struct ModelFileDigest: Equatable {
     let relativePath: String
@@ -1513,7 +1513,7 @@ func speechModelDiskSpaceFailureDetail(profile: SpeechModelProfile,
         return nil
     }
     return """
-    Parakey needs \(profile.downloadSizeText) of free disk space to download \(profile.shortName), plus room for CoreML to prepare it.
+    Speakex needs \(profile.downloadSizeText) of free disk space to download \(profile.shortName), plus room for CoreML to prepare it.
 
     Available: \(formattedByteCount(UInt64(availableBytes)))
     Needed: \(formattedByteCount(UInt64(requiredBytes)))
@@ -1547,7 +1547,7 @@ func assertSufficientDiskSpaceForSpeechModelDownload(profile: SpeechModelProfile
                                                         requiredBytes: requiredBytes) else {
         return
     }
-    throw NSError(domain: "Parakey",
+    throw NSError(domain: "Speakex",
                   code: -8,
                   userInfo: [NSLocalizedDescriptionKey: detail])
 }
@@ -1555,7 +1555,7 @@ func assertSufficientDiskSpaceForSpeechModelDownload(profile: SpeechModelProfile
 func removeSpeechModelCacheDirectory(_ cacheDir: URL) async throws -> Bool {
     guard isSafeSpeechModelCacheDirectory(cacheDir) else {
         throw NSError(
-            domain: "Parakey",
+            domain: "Speakex",
             code: -3,
             userInfo: [
                 NSLocalizedDescriptionKey: "Refusing to remove unexpected speech model cache path: \(cacheDir.path)"
@@ -1570,7 +1570,7 @@ func removeSpeechModelCacheDirectory(_ cacheDir: URL) async throws -> Bool {
         }
         guard isExistingSpeechModelCacheDirectorySafeForRemoval(cacheDir) else {
             throw NSError(
-                domain: "Parakey",
+                domain: "Speakex",
                 code: -4,
                 userInfo: [
                     NSLocalizedDescriptionKey: "Refusing to remove unsafe speech model cache path: \(cacheDir.path)"
@@ -1636,7 +1636,7 @@ func correctionImportCountText(sourceName: String, originalCount: Int, keptCount
     guard originalCount > keptCount else {
         return "\(sourceName) contains \(keptCount) corrections."
     }
-    return "\(sourceName) contains \(originalCount) entries; only the first \(keptCount) valid corrections (Parakey keeps at most \(MAX_TRANSCRIPT_CORRECTIONS)) will be imported."
+    return "\(sourceName) contains \(originalCount) entries; only the first \(keptCount) valid corrections (Speakex keeps at most \(MAX_TRANSCRIPT_CORRECTIONS)) will be imported."
 }
 
 /// Appended to the import dialog when choosing Merge would push the
@@ -1647,7 +1647,7 @@ func correctionImportMergeCapWarningText(existingCount: Int,
                                          cap: Int = MAX_TRANSCRIPT_CORRECTIONS) -> String? {
     let mergedCount = existingCount + newCount
     guard mergedCount > cap else { return nil }
-    return "Merging would produce \(mergedCount) corrections; Parakey keeps at most \(cap), so \(mergedCount - cap) would be dropped."
+    return "Merging would produce \(mergedCount) corrections; Speakex keeps at most \(cap), so \(mergedCount - cap) would be dropped."
 }
 
 private func utf8ClippedPrefix(_ text: String, maxBytes: Int) -> String {
@@ -1937,19 +1937,19 @@ func audioInputDevice(matching preference: String,
 // MARK: - Logger
 //
 // All output goes to stderr (line-buffered, so we don't lose lines
-// across an abrupt exit) and to ~/Library/Logs/SuperDictate.log.
+// across an abrupt exit) and to ~/Library/Logs/SPEAKEX.log.
 
 final class Logger: @unchecked Sendable {
     static let shared = Logger()
     private let url: URL
-    private let q = DispatchQueue(label: "ParakeyLogger")
+    private let q = DispatchQueue(label: "SpeakexLogger")
 
     var fileURL: URL { url }
 
     init() {
         let logs = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Logs", isDirectory: true)
-        url = logs.appendingPathComponent("SuperDictate.log")
+        url = logs.appendingPathComponent("SPEAKEX.log")
     }
 
     func log(_ msg: String) {
@@ -1970,7 +1970,7 @@ final class Logger: @unchecked Sendable {
 
 func log(_ msg: String) { Logger.shared.log(msg) }
 
-func superDictateApplicationSupportDirectory() throws -> URL {
+func speakexApplicationSupportDirectory() throws -> URL {
     let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         .appendingPathComponent(APP_SUPPORT_DIR_NAME, isDirectory: true)
     try FileManager.default.createDirectory(at: url,
@@ -1995,7 +1995,7 @@ struct AgentRuntimeState: Codable {
 
 enum AgentRuntimeStateStore {
     static var url: URL {
-        (try? superDictateApplicationSupportDirectory()
+        (try? speakexApplicationSupportDirectory()
             .appendingPathComponent(AGENT_STATUS_FILE_NAME)) ??
         FileManager.default.temporaryDirectory.appendingPathComponent(AGENT_STATUS_FILE_NAME)
     }
@@ -2019,9 +2019,9 @@ enum AgentRuntimeStateStore {
     }
 }
 
-enum SuperDictateControlPanelRegistry {
+enum SPEAKEXControlPanelRegistry {
     static var url: URL {
-        (try? superDictateApplicationSupportDirectory()
+        (try? speakexApplicationSupportDirectory()
             .appendingPathComponent(CONTROL_PANEL_PID_FILE_NAME)) ??
         FileManager.default.temporaryDirectory.appendingPathComponent(CONTROL_PANEL_PID_FILE_NAME)
     }
@@ -2084,7 +2084,7 @@ struct ProcessRunResult {
     let output: String
 }
 
-enum SuperDictateAgentService {
+enum SPEAKEXAgentService {
     static var launchAgentURL: URL {
         let directory = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/LaunchAgents", isDirectory: true)
@@ -2096,7 +2096,7 @@ enum SuperDictateAgentService {
 
     static func agentExecutablePath() -> String {
         Bundle.main.executablePath ??
-        "\(INSTALLED_APP_BUNDLE_PATH)/Contents/MacOS/SuperDictate"
+        "\(INSTALLED_APP_BUNDLE_PATH)/Contents/MacOS/SPEAKEX"
     }
 
     static func installAndStart() throws {
@@ -2105,7 +2105,7 @@ enum SuperDictateAgentService {
         _ = runLaunchctl(["enable", launchService])
         let kick = runLaunchctl(["kickstart", "-k", launchService])
         if kick.status != 0 && !isAgentRunning() {
-            throw NSError(domain: "SuperDictateAgentService",
+            throw NSError(domain: "SPEAKEXAgentService",
                           code: Int(kick.status),
                           userInfo: [NSLocalizedDescriptionKey: kick.output])
         }
@@ -2151,7 +2151,7 @@ enum SuperDictateAgentService {
                                                 attributes: [.posixPermissions: 0o700])
 
         let logPath = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Logs/SuperDictate-agent.launchd.log").path
+            .appendingPathComponent("Logs/SPEAKEX-agent.launchd.log").path
         let plist: [String: Any] = [
             "Label": AGENT_LABEL,
             "ProgramArguments": [agentExecutablePath(), AGENT_ARGUMENT],
@@ -2228,7 +2228,7 @@ func privacySafeLogPath(_ url: URL) -> String {
 
 func privacySafeBundlePath(_ path: String) -> String {
     switch path {
-    case "/Applications/SuperDictate.app", "/tmp/SuperDictate-dev.app":
+    case "/Applications/SPEAKEX.app", "/tmp/SPEAKEX-dev.app":
         return path
     default:
         return privacySafeLogPath(path)
@@ -2305,7 +2305,7 @@ extension ISO8601DateFormatter {
 // MARK: - Settings
 //
 // Thin wrapper around the app's standard NSUserDefaults domain, so
-// settings persist at `~/Library/Preferences/com.local.superdictate.plist`.
+// settings persist at `~/Library/Preferences/com.local.speakex.plist`.
 // One property per user-visible setting; defaults are returned inline
 // by each getter when the key is missing, rather than via a central
 // `register()` call.
@@ -2676,7 +2676,7 @@ final class Settings: @unchecked Sendable {
     /// "Remind me later" pause state, persisted so a relaunch inside
     /// the 24 h window does not re-prompt ~30 s after launch. Both
     /// halves are validated independently and corrupt stored values
-    /// degrade to nil; ParakeyApp treats a missing half as "no pause"
+    /// degrade to nil; SpeakexApp treats a missing half as "no pause"
     /// and clears the leftover at startup.
     var updateReminderPausedVersion: String? {
         get {
@@ -3022,7 +3022,7 @@ private func speechModelFailureDetail(errorDescription: String) -> String {
         return """
         \(errorDescription)
 
-        Parakey needs a one-time download of the local speech model. Check your network connection and retry; audio is not uploaded.
+        Speakex needs a one-time download of the local speech model. Check your network connection and retry; audio is not uploaded.
         """
     }
     return """
@@ -3119,7 +3119,7 @@ private func audioInputFailureDetail(errorDescription: String) -> String {
     return """
     \(errorDescription)
 
-    Parakey rebuilt the audio engine and retried microphone startup, but CoreAudio is still refusing to start the input unit. If this began after sleep/wake or an audio-device change, restart CoreAudio with sudo killall coreaudiod or reboot the Mac, then retry audio startup.
+    Speakex rebuilt the audio engine and retried microphone startup, but CoreAudio is still refusing to start the input unit. If this began after sleep/wake or an audio-device change, restart CoreAudio with sudo killall coreaudiod or reboot the Mac, then retry audio startup.
     """
 }
 
@@ -3345,7 +3345,7 @@ private func hotkeyPreferenceUpdateResult(
     guard persistedKeycode == recordable.keycode else {
         return .rolledBack(
             previous: previous,
-            message: "Parakey could not save that hotkey, so it kept \(previous.name)."
+            message: "Speakex could not save that hotkey, so it kept \(previous.name)."
         )
     }
 
@@ -3382,7 +3382,7 @@ private func hotkeyRecordingDecision(for event: HotkeyEventSnapshot) -> HotkeyRe
     guard event.typeRawValue == CGEventType.keyDown.rawValue else { return .ignore }
     guard let choice = recordableHotkeyChoice(forKeycode: event.keycode),
           !choice.isModifier else {
-        return .reject("Choose a right-side modifier key or an F-key. Typing keys are not safe because Parakey suppresses its dictation key globally.")
+        return .reject("Choose a right-side modifier key or an F-key. Typing keys are not safe because Speakex suppresses its dictation key globally.")
     }
     return .accept(choice)
 }
@@ -3857,7 +3857,7 @@ private enum PendingDictationRecovery {
     private static let magic = Data("SDAR".utf8)
 
     static func directoryURL() throws -> URL {
-        let url = try superDictateApplicationSupportDirectory()
+        let url = try speakexApplicationSupportDirectory()
             .appendingPathComponent(directoryName, isDirectory: true)
         try FileManager.default.createDirectory(at: url,
                                                 withIntermediateDirectories: true,
@@ -3967,7 +3967,7 @@ private enum PendingDictationRecovery {
 
 private final class PendingDictationJournal: @unchecked Sendable {
     let url: URL
-    private let queue = DispatchQueue(label: "SuperDictate.PendingDictationJournal",
+    private let queue = DispatchQueue(label: "SPEAKEX.PendingDictationJournal",
                                       qos: .utility)
     private var fileDescriptor: Int32
     private var didLogWriteFailure = false
@@ -4132,7 +4132,7 @@ final class AudioCapture: @unchecked Sendable {
             sampleRate: SAMPLE_RATE,
             channels: 1,
             interleaved: false
-        ) else { throw NSError(domain: "Parakey", code: -1) }
+        ) else { throw NSError(domain: "Speakex", code: -1) }
 
         let sourceFormat = converterSourceFormat(for: inputFormat)
         let mixToMono = inputFormat.channelCount > 1 && sourceFormat.channelCount == 1
@@ -4477,7 +4477,7 @@ private final class AudioConverterInputProvider: @unchecked Sendable {
 // Actors are reentrant at suspension points: while
 // `await asr.transcribe(...)` is suspended, a second transcribe()
 // call would enter the actor and start concurrent inference. The
-// real guard is ParakeyApp.isBusy, which ensures the app never
+// real guard is SpeakexApp.isBusy, which ensures the app never
 // issues a second transcribe while one is in flight. The `inFlight`
 // flag below is a cheap defensive backstop should that invariant
 // ever break: it refuses (and, in DEBUG, asserts on) a re-entrant
@@ -4571,11 +4571,11 @@ actor TranscriptionWorker {
                                language: Language? = nil,
                                requestedAt: TimeInterval) async throws -> TranscriptionWorkerResult {
         let workerEnteredAt = ProcessInfo.processInfo.systemUptime
-        guard let engine else { throw NSError(domain: "Parakey", code: -2) }
+        guard let engine else { throw NSError(domain: "Speakex", code: -2) }
         guard !inFlight else {
-            log("ASR: transcribe re-entered while another transcription is in flight — refusing (ParakeyApp.isBusy should make this impossible)")
+            log("ASR: transcribe re-entered while another transcription is in flight — refusing (SpeakexApp.isBusy should make this impossible)")
             assertionFailure("TranscriptionWorker.transcribe re-entered across a suspension point")
-            throw NSError(domain: "Parakey", code: -3)
+            throw NSError(domain: "Speakex", code: -3)
         }
         inFlight = true
         defer { inFlight = false }
@@ -5921,7 +5921,7 @@ enum SystemAudio {
     // thread (this serial queue or, for the launch-time sync calls,
     // the main thread), which satisfies NSAppleScript's
     // not-thread-safe contract.
-    private static let queue = DispatchQueue(label: "ParakeySystemAudio", qos: .userInitiated)
+    private static let queue = DispatchQueue(label: "SpeakexSystemAudio", qos: .userInitiated)
 
     /// nil = the query itself failed, as opposed to a definitive
     /// muted/unmuted answer.
@@ -6223,7 +6223,7 @@ private func diagnosticBulletLines(_ lines: [String], emptyText: String) -> Stri
 
 func diagnosticsReportText(from snapshot: DiagnosticsReportSnapshot) -> String {
     """
-    Parakey diagnostics
+    Speakex diagnostics
     Generated: \(snapshot.generated)
     App version: \(snapshot.appVersion) (\(snapshot.appBuild))
     macOS: \(snapshot.macOS)
@@ -6369,7 +6369,7 @@ func isNewer(_ candidate: String, than current: String) -> Bool {
 // previous denial is still cached). On a fresh launch after an
 // upgrade (CFBundleShortVersionString differs from
 // settings.lastSeenVersion), we proactively `tccutil reset` any
-// DENIED entry for `com.local.superdictate`. GRANTED entries stay
+// DENIED entry for `com.local.speakex`. GRANTED entries stay
 // intact — we never reset away permissions the user gave us.
 //
 // The companion to this is the click-twice-to-reset retry in the
@@ -6389,7 +6389,7 @@ enum TCC {
 
     /// Serial so multiple resets (e.g. the upgrade-recovery loop)
     /// execute in the order they were requested.
-    private static let queue = DispatchQueue(label: "ParakeyTCCReset", qos: .userInitiated)
+    private static let queue = DispatchQueue(label: "SpeakexTCCReset", qos: .userInitiated)
 
     /// Runs `tccutil reset` on a background queue. tccutil is usually
     /// quick but waitUntilExit() on the main thread would run behind
@@ -6472,18 +6472,18 @@ enum UpdateCheckFailure: Error, Equatable, Sendable {
 func manualUpdateCheckFailureText(_ failure: UpdateCheckFailure) -> String {
     switch failure {
     case .network:
-        return "SuperDictate couldn't reach GitHub. Check your internet connection and try again."
+        return "SPEAKEX couldn't reach GitHub. Check your internet connection and try again."
     case .httpStatus(403):
         return "GitHub declined the update check (HTTP 403). This is usually temporary rate limiting — try again in a few minutes."
     case .httpStatus(let code):
         return "GitHub returned an error (HTTP \(code)). Try again later."
     case .unexpectedResponse:
-        return "GitHub returned a response SuperDictate couldn't read. Try again later, or check the releases page on GitHub directly."
+        return "GitHub returned a response SPEAKEX couldn't read. Try again later, or check the releases page on GitHub directly."
     }
 }
 
 enum UpdateCheck {
-    private static let githubReleaseURLPathPrefix = "/shlgd/SuperDictate/releases/tag/"
+    private static let githubReleaseURLPathPrefix = "/raxmiev/SPEAKEX/releases/tag/"
     static let maxReleaseResponseBytes = 512 * 1024
 
     static func fetchLatest() async -> Result<GitHubRelease, UpdateCheckFailure> {
@@ -6492,7 +6492,7 @@ enum UpdateCheck {
         // The privacy docs promise exactly this fixed token — no
         // version, device, or user identifiers. Must stay in sync with
         // docs/privacy/network-calls.json.
-        req.setValue("superdictate-update-check", forHTTPHeaderField: "User-Agent")
+        req.setValue("speakex-update-check", forHTTPHeaderField: "User-Agent")
         req.timeoutInterval = 10
         let config = URLSessionConfiguration.ephemeral
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
@@ -6634,7 +6634,7 @@ func updateHelperScript(pid: pid_t,
     STATE_PATH=\#(shellSingleQuoted(statePath))
     APP_PATH=\#(shellSingleQuoted(appPath))
     RELEASES_PAGE=\#(shellSingleQuoted(releasesPageURL))
-    PARAKEY_PID=\#(pid)
+    SPEAKEX_PID=\#(pid)
     CASK_TAP=\#(shellSingleQuoted(HOMEBREW_CASK_TAP))
     CASK_TOKEN=\#(shellSingleQuoted(HOMEBREW_CASK_TOKEN))
     CASK_INSTALLED_TOKEN=\#(shellSingleQuoted(HOMEBREW_CASK_INSTALLED_TOKEN))
@@ -6705,24 +6705,24 @@ func updateHelperScript(pid: pid_t,
         "$BREW" "$@"
     }
 
-    wait_for_parakey_exit() {
+    wait_for_speakex_exit() {
         for _ in {1..60}; do
-            if ! kill -0 "$PARAKEY_PID" 2>/dev/null; then
+            if ! kill -0 "$SPEAKEX_PID" 2>/dev/null; then
                 return 0
             fi
             sleep 0.5
         done
 
-        log "Parakey was still running after 30s; sending TERM before updating."
-        kill -TERM "$PARAKEY_PID" 2>/dev/null || true
+        log "Speakex was still running after 30s; sending TERM before updating."
+        kill -TERM "$SPEAKEX_PID" 2>/dev/null || true
         for _ in {1..20}; do
-            if ! kill -0 "$PARAKEY_PID" 2>/dev/null; then
+            if ! kill -0 "$SPEAKEX_PID" 2>/dev/null; then
                 return 0
             fi
             sleep 0.5
         done
 
-        fail "Parakey did not quit, so the app bundle was not touched."
+        fail "Speakex did not quit, so the app bundle was not touched."
     }
 
     installed_target_version() {
@@ -6733,7 +6733,7 @@ func updateHelperScript(pid: pid_t,
     }
 
     {
-        echo "[$(timestamp)] Parakey update starting"
+        echo "[$(timestamp)] Speakex update starting"
         echo "Target version: $TARGET_VERSION"
         echo "Current installed version: $(app_version)"
         echo "Brew: $BREW"
@@ -6743,7 +6743,7 @@ func updateHelperScript(pid: pid_t,
         echo "App: $APP_PATH"
     }
 
-    state "preparing" "Preparing Homebrew for Parakey v$TARGET_VERSION..."
+    state "preparing" "Preparing Homebrew for Speakex v$TARGET_VERSION..."
 
     if ! run_brew tap "$CASK_TAP"; then
         fail "brew tap failed; leaving the existing app in place."
@@ -6754,13 +6754,13 @@ func updateHelperScript(pid: pid_t,
         fail "brew update failed; leaving the existing app in place."
     fi
 
-    state "downloading" "Downloading Parakey v$TARGET_VERSION..."
+    state "downloading" "Downloading Speakex v$TARGET_VERSION..."
     if ! run_brew fetch --cask --force "$CASK_TOKEN"; then
         fail "brew cask fetch failed; leaving the existing app in place."
     fi
 
-    state "installing" "Installing Parakey v$TARGET_VERSION..."
-    wait_for_parakey_exit
+    state "installing" "Installing Speakex v$TARGET_VERSION..."
+    wait_for_speakex_exit
 
     if ! run_brew upgrade --cask --force --appdir="$APP_DIR" "$CASK_TOKEN"; then
         fail "brew cask upgrade failed; leaving the existing app in place."
@@ -6769,7 +6769,7 @@ func updateHelperScript(pid: pid_t,
     state "verifying" "Verifying the installed app..."
     if ! installed_target_version; then
         log "brew upgrade completed without installing v$TARGET_VERSION; forcing qualified cask reinstall."
-        state "installing" "Reinstalling Parakey v$TARGET_VERSION..."
+        state "installing" "Reinstalling Speakex v$TARGET_VERSION..."
         if ! run_brew update --force; then
             fail "brew update failed before reinstall; leaving the existing app in place."
         fi
@@ -6779,13 +6779,13 @@ func updateHelperScript(pid: pid_t,
     fi
 
     if ! installed_target_version; then
-        fail "Expected Parakey v$TARGET_VERSION or newer after update, but the installed app is still $(app_version)."
+        fail "Expected Speakex v$TARGET_VERSION or newer after update, but the installed app is still $(app_version)."
     fi
 
-    state "relaunching" "Update complete. Reopening Parakey..."
+    state "relaunching" "Update complete. Reopening Speakex..."
     sleep 2
     /usr/bin/open "$APP_PATH"
-    state "complete" "Parakey v$TARGET_VERSION is installed."
+    state "complete" "Speakex v$TARGET_VERSION is installed."
     """#
 }
 
@@ -6793,7 +6793,7 @@ private func writePrivateUpdateHelperScript(_ script: String,
                                             directory: String = NSTemporaryDirectory(),
                                             fileName: String? = nil) throws -> String {
     guard !directory.isEmpty else { throw posixError(EINVAL) }
-    let leafName = fileName ?? "parakey-update-\(UUID().uuidString).sh"
+    let leafName = fileName ?? "speakex-update-\(UUID().uuidString).sh"
     guard !leafName.isEmpty,
           (leafName as NSString).lastPathComponent == leafName else {
         throw posixError(EINVAL)
@@ -6842,7 +6842,7 @@ private func openPrivateUpdateHelperLog(preferredPath: String = UPDATE_HELPER_LO
                                  handle: FileHandle(fileDescriptor: fd, closeOnDealloc: true))
     } catch {
         let fallbackPath = (fallbackDirectory as NSString)
-            .appendingPathComponent("parakey-update-\(UUID().uuidString).log")
+            .appendingPathComponent("speakex-update-\(UUID().uuidString).log")
         let fd = try openPrivateOutputFileDescriptor(atPath: fallbackPath,
                                                      exclusive: true,
                                                      removeOnFailure: true)
@@ -6921,7 +6921,7 @@ private func openPrivateOutputFileDescriptor(atPath path: String,
 // Single class that owns the lifecycle and the AppKit menu-bar UI.
 // All UI state lives here; subsystems (HotkeyListener, AudioCapture,
 // TranscriptionWorker, UpdateCheck, …) hold their own state but
-// call back into `ParakeyApp` for anything that touches the menu.
+// call back into `SpeakexApp` for anything that touches the menu.
 
 private enum DictationReleaseShortcut: Equatable {
     case standard
@@ -7356,7 +7356,7 @@ private func exportRecordingHUDAnimationFrames(to directory: URL) throws {
                                                 bytesPerRow: 0,
                                                 bitsPerPixel: 0),
                   let context = NSGraphicsContext(bitmapImageRep: bitmap) else {
-                throw NSError(domain: "SuperDictateHUDExport", code: 1,
+                throw NSError(domain: "SPEAKEXHUDExport", code: 1,
                               userInfo: [NSLocalizedDescriptionKey: "Could not create an RGBA frame."])
             }
             bitmap.size = pointSize
@@ -7369,7 +7369,7 @@ private func exportRecordingHUDAnimationFrames(to directory: URL) throws {
             NSGraphicsContext.restoreGraphicsState()
 
             guard let png = bitmap.representation(using: .png, properties: [:]) else {
-                throw NSError(domain: "SuperDictateHUDExport", code: 2,
+                throw NSError(domain: "SPEAKEXHUDExport", code: 2,
                               userInfo: [NSLocalizedDescriptionKey: "Could not encode a PNG frame."])
             }
             let name = String(format: "frame-%05d.png", frameIndex)
@@ -7476,7 +7476,7 @@ private final class UpdateProgressAppDelegate: NSObject, NSApplicationDelegate, 
                               styleMask: [.titled, .closable],
                               backing: .buffered,
                               defer: false)
-        window.title = "Updating Parakey"
+        window.title = "Updating Speakex"
         window.isReleasedWhenClosed = false
         window.delegate = self
         self.window = window
@@ -7488,11 +7488,11 @@ private final class UpdateProgressAppDelegate: NSObject, NSApplicationDelegate, 
         root.edgeInsets = NSEdgeInsets(top: 18, left: 20, bottom: 16, right: 20)
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let title = updateProgressLabel("Updating Parakey to v\(launch.targetVersion)",
+        let title = updateProgressLabel("Updating Speakex to v\(launch.targetVersion)",
                                         font: .systemFont(ofSize: 18, weight: .semibold))
         messageLabel = updateProgressLabel("Starting update...",
                                            font: .systemFont(ofSize: 13, weight: .medium))
-        detailLabel = updateProgressLabel("Parakey will reopen automatically when the update finishes.",
+        detailLabel = updateProgressLabel("Speakex will reopen automatically when the update finishes.",
                                           font: .systemFont(ofSize: 12),
                                           color: .secondaryLabelColor)
         detailLabel.preferredMaxLayoutWidth = 390
@@ -7599,12 +7599,12 @@ private final class UpdateProgressAppDelegate: NSObject, NSApplicationDelegate, 
             closeButton.isHidden = false
             scheduleClose(after: 4)
         case "installing":
-            detailLabel.stringValue = "Parakey has quit so Homebrew can replace the app bundle. It will reopen automatically."
+            detailLabel.stringValue = "Speakex has quit so Homebrew can replace the app bundle. It will reopen automatically."
         case "relaunching":
             detailLabel.stringValue = "Closing the updater so macOS opens the newly installed app."
             scheduleClose(after: 0.5)
         default:
-            detailLabel.stringValue = "Parakey will reopen automatically when the update finishes."
+            detailLabel.stringValue = "Speakex will reopen automatically when the update finishes."
         }
     }
 
@@ -8342,7 +8342,7 @@ private final class DictationSpeechTimeChartView: NSView {
 }
 
 @MainActor
-final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
+final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private struct CachedInsertionTarget {
         let target: FocusedInsertionTargetFrame
         let windowFrame: NSRect?
@@ -8493,7 +8493,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     /// `correctionSyncScanInFlight` (main-actor) guarantees scans
     /// never overlap; results hop back to the main actor, where the
     /// existing merge/apply logic runs unchanged.
-    private static let correctionSyncScanQueue = DispatchQueue(label: "ParakeyCorrectionSyncScan",
+    private static let correctionSyncScanQueue = DispatchQueue(label: "SpeakexCorrectionSyncScan",
                                                                qos: .utility)
     private var correctionSyncScanInFlight = false
     /// Scan request that arrived while a scan was in flight; re-issued
@@ -8627,7 +8627,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func openControlPanelFromAgent() {
-        if SuperDictateControlPanelRegistry.activateExistingPanelIfPresent() {
+        if SPEAKEXControlPanelRegistry.activateExistingPanelIfPresent() {
             log("control panel activated from agent")
             return
         }
@@ -8749,7 +8749,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let normalizedTempRoot = tempRoot.hasSuffix("/") ? tempRoot : "\(tempRoot)/"
 
         guard url.lastPathComponent == CORRECTIONS_FILE_NAME,
-              folder.lastPathComponent.hasPrefix("Parakey-"),
+              folder.lastPathComponent.hasPrefix("Speakex-"),
               folder.path.hasPrefix(normalizedTempRoot)
         else {
             log("correction share cleanup skipped (\(reason)): unexpected temp file")
@@ -9302,7 +9302,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // finds it under that path automatically; Bundle.module is
         // deliberately not used here so codesign --deep doesn't have
         // to grapple with a SwiftPM resource bundle.
-        let image = NSImage(named: "parakey-menubar")
+        let image = NSImage(named: "speakex-menubar")
         image?.isTemplate = true
         image?.size = NSSize(width: 18, height: 18)
         templateImage = image
@@ -9311,10 +9311,10 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         button.image = image
         button.imagePosition = .imageOnly
         if image == nil {
-            button.title = "Parakey"
-            log("statusItem: parakey-menubar.png not in Bundle.main — text fallback")
+            button.title = "Speakex"
+            log("statusItem: speakex-menubar.png not in Bundle.main — text fallback")
         }
-        button.toolTip = "Parakey"
+        button.toolTip = "Speakex"
     }
 
     private func concealMenuBarIcon() {
@@ -10597,7 +10597,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         proc.arguments = [
             "-c",
             systemAudioMuteWatchdogScript(),
-            "parakey-audio-watchdog",
+            "speakex-audio-watchdog",
             "\(getpid())",
             systemAudioMuteMarkerURL().path,
         ]
@@ -11360,8 +11360,8 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func confirmStopDictation() -> Bool {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "Stop SuperDictate?"
-        alert.informativeText = "Right Command dictation will stop until you open SuperDictate again. Use Close to hide windows while keeping dictation running."
+        alert.messageText = "Stop SPEAKEX?"
+        alert.informativeText = "Right Command dictation will stop until you open SPEAKEX again. Use Close to hide windows while keeping dictation running."
         alert.addButton(withTitle: "Keep Running")
         alert.addButton(withTitle: "Stop Dictation")
         return alert.runModal() == .alertSecondButtonReturn
@@ -11393,9 +11393,9 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         showAppForModal()
         let alert = NSAlert()
         alert.alertStyle = .informational
-        alert.messageText = "SuperDictate Reopened After an Unexpected Exit"
+        alert.messageText = "SPEAKEX Reopened After an Unexpected Exit"
         alert.informativeText = """
-            Parakey appears to have exited last time without a normal shutdown. Nothing was sent anywhere.
+            Speakex appears to have exited last time without a normal shutdown. Nothing was sent anywhere.
 
             You can copy a privacy-safe diagnostics report or open the local log if you want to file an issue.
             """
@@ -11417,7 +11417,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.title = "Save Diagnostics"
         panel.message = "Save a privacy-safe diagnostics report for a GitHub issue."
         panel.prompt = "Save"
-        panel.nameFieldStringValue = "Parakey Diagnostics.txt"
+        panel.nameFieldStringValue = "Speakex Diagnostics.txt"
         panel.allowedContentTypes = [.plainText]
         panel.canCreateDirectories = true
         guard panel.runModal() == .OK, let url = panel.url else { return }
@@ -11575,7 +11575,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // in the menu that gets such an indicator — every other row
         // sits flush against the left edge. The wrapper produces the
         // identical behaviour with no auto-glyph.
-        let quit = NSMenuItem(title: "Quit SuperDictate",
+        let quit = NSMenuItem(title: "Quit SPEAKEX",
                               action: #selector(quitClicked(_:)),
                               keyEquivalent: "q")
         quit.target = self
@@ -11632,7 +11632,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         sub.addItem(.separator())
 
-        let about = NSMenuItem(title: "About SuperDictate",
+        let about = NSMenuItem(title: "About SPEAKEX",
                                action: #selector(showAboutClicked(_:)),
                                keyEquivalent: "")
         about.target = self
@@ -11724,16 +11724,16 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if isCoreRuntimeReady {
             return "Starting hotkey listener…"
         }
-        return "SuperDictate is not ready"
+        return "SPEAKEX is not ready"
     }
 
     private func diagnosticsText() -> String {
         let generated = ISO8601DateFormatter().string(from: Date())
         let bundlePath = Bundle.main.bundlePath
         let installKind: String
-        if bundlePath == "/Applications/SuperDictate.app" {
+        if bundlePath == "/Applications/SPEAKEX.app" {
             installKind = "Applications app"
-        } else if bundlePath == "/tmp/SuperDictate-dev.app" {
+        } else if bundlePath == "/tmp/SPEAKEX-dev.app" {
             installKind = "signed dev app"
         } else {
             installKind = "other"
@@ -11896,7 +11896,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                               styleMask: [.titled, .closable],
                               backing: .buffered,
                               defer: false)
-        window.title = "Set Up SuperDictate"
+        window.title = "Set Up SPEAKEX"
         window.isReleasedWhenClosed = false
         window.delegate = self
         setupChecklistWindow = window
@@ -11959,8 +11959,8 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         root.edgeInsets = NSEdgeInsets(top: 20, left: 22, bottom: 18, right: 22)
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let title = setupLabel("Set Up SuperDictate", font: .systemFont(ofSize: 22, weight: .semibold))
-        let subtitle = setupLabel("Finish these checks before dictating. SuperDictate keeps this setup local to your Mac.",
+        let title = setupLabel("Set Up SPEAKEX", font: .systemFont(ofSize: 22, weight: .semibold))
+        let subtitle = setupLabel("Finish these checks before dictating. SPEAKEX keeps this setup local to your Mac.",
                                   font: .systemFont(ofSize: 13),
                                   color: .secondaryLabelColor)
         subtitle.preferredMaxLayoutWidth = 476
@@ -11978,7 +11978,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         root.addArrangedSubview(makeHotkeySetupRow())
 
         if !setupChecklistIsComplete {
-            let tip = setupLabel("Tip: If clicking 'Grant' doesn't open a prompt or show SuperDictate in System Settings, click 'Try Again' — SuperDictate will reset its macOS privacy permission entry and re-request, which clears stuck macOS state.",
+            let tip = setupLabel("Tip: If clicking 'Grant' doesn't open a prompt or show SPEAKEX in System Settings, click 'Try Again' — SPEAKEX will reset its macOS privacy permission entry and re-request, which clears stuck macOS state.",
                                  font: .systemFont(ofSize: 11),
                                  color: .secondaryLabelColor)
             tip.preferredMaxLayoutWidth = 476
@@ -12037,7 +12037,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func setupChecklistSummary() -> String {
         setupChecklistIsComplete
-            ? "Setup is complete. Use SuperDictate from the Dock or shortcuts."
+            ? "Setup is complete. Use SPEAKEX from the Dock or shortcuts."
             : "You can close this window; the menu will keep tracking setup."
     }
 
@@ -12098,9 +12098,9 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         case .microphone:
             return "Captures your voice while dictating. Click 'Grant', then click 'OK' in the macOS prompt."
         case .accessibility:
-            return "Pastes the transcript at your cursor. Click 'Grant' to open System Settings → Privacy & Security → Accessibility, then enable the toggle next to 'SuperDictate'."
+            return "Pastes the transcript at your cursor. Click 'Grant' to open System Settings → Privacy & Security → Accessibility, then enable the toggle next to 'SPEAKEX'."
         case .inputMonitoring:
-            return "Lets SuperDictate detect the dictation hotkey. Click 'Grant' to open System Settings → Privacy & Security → Input Monitoring, then enable the toggle next to 'SuperDictate'."
+            return "Lets SPEAKEX detect the dictation hotkey. Click 'Grant' to open System Settings → Privacy & Security → Input Monitoring, then enable the toggle next to 'SPEAKEX'."
         }
     }
 
@@ -12235,7 +12235,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             // it before tccutil finished would race the scrub it
             // depends on.
             log("  resetting TCC for \(p.rawValue) before retry")
-            TCC.reset(p, bundleID: Bundle.main.bundleIdentifier ?? "com.local.superdictate") { [weak self] in
+            TCC.reset(p, bundleID: Bundle.main.bundleIdentifier ?? "com.local.speakex") { [weak self] in
                 guard let self, !self.isTerminating else { return }
                 Permissions.request(p)
                 self.startPermissionReadinessMonitor(reason: "permission grant")
@@ -12351,13 +12351,13 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             launchAtLogin.state = .on
         case .requiresApproval:
             launchAtLogin.state = .mixed
-            launchAtLogin.toolTip = "Approve SuperDictate in System Settings → General → Login Items."
+            launchAtLogin.toolTip = "Approve SPEAKEX in System Settings → General → Login Items."
         default:
             launchAtLogin.state = .off
         }
         sub.addItem(launchAtLogin)
 
-        let dock = NSMenuItem(title: "Show SuperDictate in Dock",
+        let dock = NSMenuItem(title: "Show SPEAKEX in Dock",
                               action: #selector(toggleDock(_:)),
                               keyEquivalent: "")
         dock.target = self
@@ -12861,7 +12861,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         showAppForModal()
         let panel = NSOpenPanel()
         panel.title = "Import Text Corrections"
-        panel.message = "Choose a Parakey corrections file to import."
+        panel.message = "Choose a Speakex corrections file to import."
         panel.prompt = "Import"
         panel.allowedContentTypes = [TranscriptCorrectionsTransfer.contentType]
         panel.allowsMultipleSelection = false
@@ -12896,7 +12896,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             cleanupPendingSharedCorrections(reason: "new share")
 
             let folder = FileManager.default.temporaryDirectory
-                .appendingPathComponent("Parakey-\(UUID().uuidString)", isDirectory: true)
+                .appendingPathComponent("Speakex-\(UUID().uuidString)", isDirectory: true)
             let url = folder.appendingPathComponent(CORRECTIONS_FILE_NAME)
             try TranscriptCorrectionsTransfer.write(settings.transcriptCorrections, to: url)
             pendingSharedCorrectionsURL = url
@@ -12924,9 +12924,9 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let alert = NSAlert()
         alert.messageText = "Set Up Text Correction Sync"
         alert.informativeText = """
-            Parakey can keep corrections in one local file. Put that file in iCloud Drive, Dropbox, Syncthing, or another synced folder to keep multiple Macs aligned without a Parakey account.
+            Speakex can keep corrections in one local file. Put that file in iCloud Drive, Dropbox, Syncthing, or another synced folder to keep multiple Macs aligned without a Speakex account.
 
-            Parakey only reads and writes the file you choose.
+            Speakex only reads and writes the file you choose.
             """
         alert.addButton(withTitle: "Create Sync File")
         alert.addButton(withTitle: "Use Existing File")
@@ -12952,7 +12952,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = "Stop Syncing Text Corrections?"
-        alert.informativeText = "Parakey will keep the corrections already on this Mac. The sync file will not be deleted."
+        alert.informativeText = "Speakex will keep the corrections already on this Mac. The sync file will not be deleted."
         alert.addButton(withTitle: "Stop Syncing")
         alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else { return }
@@ -13008,7 +13008,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         showAppForModal()
         let panel = NSSavePanel()
         panel.title = "Create Text Correction Sync File"
-        panel.message = "Choose where Parakey should keep the sync file. A folder synced by iCloud Drive or another provider works best."
+        panel.message = "Choose where Speakex should keep the sync file. A folder synced by iCloud Drive or another provider works best."
         panel.prompt = "Create"
         panel.nameFieldStringValue = CORRECTIONS_FILE_NAME
         panel.allowedContentTypes = [TranscriptCorrectionsTransfer.contentType]
@@ -13029,7 +13029,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         showAppForModal()
         let panel = NSOpenPanel()
         panel.title = "Choose Text Correction Sync File"
-        panel.message = "Choose an existing Parakey corrections file."
+        panel.message = "Choose an existing Speakex corrections file."
         panel.prompt = "Use File"
         panel.allowedContentTypes = [TranscriptCorrectionsTransfer.contentType]
         panel.allowsMultipleSelection = false
@@ -13310,7 +13310,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         case .fingerprintUnavailable:
             if presentErrors {
                 showCorrectionTransferError(title: "Sync Failed",
-                                            message: "Parakey could not find the selected sync file.")
+                                            message: "Speakex could not find the selected sync file.")
             }
         case .unchanged:
             break
@@ -13427,7 +13427,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         showCorrectionTransferError(
             title: "Text Correction Sync Conflict",
             message: """
-            The sync file changed before this Mac wrote its latest text correction edits. Parakey kept the corrections on this Mac and stopped syncing so it would not overwrite the file.
+            The sync file changed before this Mac wrote its latest text correction edits. Speakex kept the corrections on this Mac and stopped syncing so it would not overwrite the file.
 
             Reconnect the sync file after importing or resolving the conflicting correction\(conflictingSources.count == 1 ? "" : "s"):
             \(examples)\(remainingText)
@@ -13448,7 +13448,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             showCorrectionTransferError(
                 title: "Text Correction Sync Stopped",
                 message: """
-                Parakey stopped syncing because the selected corrections file is no longer safe to use.
+                Speakex stopped syncing because the selected corrections file is no longer safe to use.
 
                 \(error.localizedDescription)
                 """
@@ -13475,7 +13475,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         showAppForModal()
         let alert = NSAlert()
         alert.messageText = existing == nil ? "Add Text Correction" : "Edit Text Correction"
-        alert.informativeText = "Add the incorrect text Parakey typed, then the text it should paste instead."
+        alert.informativeText = "Add the incorrect text Speakex typed, then the text it should paste instead."
         alert.addButton(withTitle: "Save")
         alert.addButton(withTitle: "Cancel")
 
@@ -13704,7 +13704,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 recordStartupFailure(
                     stage: .hotkeyListener,
                     error: NSError(
-                        domain: "Parakey",
+                        domain: "Speakex",
                         code: -5,
                         userInfo: [
                             NSLocalizedDescriptionKey: "The hotkey listener could not restart after recording a hotkey."
@@ -13916,7 +13916,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func showAboutClicked(_ sender: NSMenuItem) {
         showAppForModal()
         let alert = NSAlert()
-        alert.messageText = "SuperDictate \(currentBundleVersion())"
+        alert.messageText = "SPEAKEX \(currentBundleVersion())"
         alert.informativeText = """
             Lightweight push-to-talk dictation for Apple Silicon Macs.
 
@@ -13928,14 +13928,14 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             Network: model download, optional update check and install.
             Permissions: microphone audio, paste-at-cursor, push-to-talk hotkey.
 
-            Open source, based on Parakey by Richard Courtman.
-            github.com/shlgd/SuperDictate · MIT licensed
+            Open source, based on Speakex by Richard Courtman.
+            github.com/raxmiev/SPEAKEX · MIT licensed
             """
         // Use our app icon instead of NSAlert's default exclamation
-        // mark. .icns lives in Contents/Resources/Parakey.icns;
+        // mark. .icns lives in Contents/Resources/Speakex.icns;
         // NSImage(named:) on Bundle.main resolves it by filename
         // sans extension.
-        if let icon = NSImage(named: "Parakey") {
+        if let icon = NSImage(named: "Speakex") {
             alert.icon = icon
         }
         alert.addButton(withTitle: "OK")
@@ -14056,7 +14056,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func showReleaseNotes(for release: GitHubRelease) {
         showAppForModal()
         let alert = NSAlert()
-        alert.messageText = "Parakey v\(release.version)"
+        alert.messageText = "Speakex v\(release.version)"
         var body = release.body.trimmingCharacters(in: .whitespacesAndNewlines)
         if body.isEmpty { body = "(No release notes available for this version.)" }
         else if body.count > 1500 { body = String(body.prefix(1500)) + "\n\n…" }
@@ -14148,7 +14148,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func showUpdateAvailableAlert(for release: GitHubRelease, currentVersion: String) {
         showAppForModal()
         let alert = NSAlert()
-        alert.messageText = "Parakey v\(release.version) is available"
+        alert.messageText = "Speakex v\(release.version) is available"
         alert.informativeText = "You're running v\(currentVersion). Nothing is installed unless you choose Update Now."
         alert.addButton(withTitle: "Update Now")
         alert.addButton(withTitle: "What's New")
@@ -14215,7 +14215,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func showUpToDateAlert(currentVersion: String) {
         showAppForModal()
         let alert = NSAlert()
-        alert.messageText = "Parakey is up to date"
+        alert.messageText = "Speakex is up to date"
         alert.informativeText = "You're running v\(currentVersion)."
         alert.addButton(withTitle: "OK")
         alert.runModal()
@@ -14249,7 +14249,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         To update, run this command in Terminal:
 
-        curl -fsSL https://raw.githubusercontent.com/shlgd/SuperDictate/main/install.sh | bash
+        curl -fsSL https://raw.githubusercontent.com/raxmiev/SPEAKEX/main/install.sh | bash
         """
         alert.addButton(withTitle: "Open Release Page")
         alert.addButton(withTitle: "Close")
@@ -14271,7 +14271,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         You can update from Terminal:
 
-        curl -fsSL https://raw.githubusercontent.com/shlgd/SuperDictate/main/install.sh | bash
+        curl -fsSL https://raw.githubusercontent.com/raxmiev/SPEAKEX/main/install.sh | bash
         """
         alert.addButton(withTitle: "OK")
         alert.runModal()
@@ -14282,7 +14282,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     /// waitUntilExit() here would stall every keystroke system-wide
     /// (and a >1 s stall makes macOS disable the tap), so the check
     /// runs on a background queue and reports back to the main actor.
-    private static let brewPreflightQueue = DispatchQueue(label: "ParakeyBrewPreflight",
+    private static let brewPreflightQueue = DispatchQueue(label: "SpeakexBrewPreflight",
                                                           qos: .userInitiated)
 
     private func isBrewInstall(brewPath: String,
@@ -14364,14 +14364,14 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             statePath = try createPrivateUpdateProgressStateFile()
         } catch {
             log("update: creating progress state failed: \(error.localizedDescription)")
-            showUpdateCouldNotStart(detail: "Parakey couldn't prepare the update progress window.")
+            showUpdateCouldNotStart(detail: "Speakex couldn't prepare the update progress window.")
             return
         }
 
         // Detached shell helper refreshes Homebrew, downloads the cask,
         // waits for THIS process to exit, upgrades/reinstalls the app,
         // verifies the installed bundle version, then re-opens
-        // /Applications/SuperDictate.app. We can't run the install step
+        // /Applications/SPEAKEX.app. We can't run the install step
         // in-process because it replaces the bundle we're executing from.
         let script = updateHelperScript(pid: getpid(),
                                         brewPath: brewPath,
@@ -14388,7 +14388,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         } catch {
             try? FileManager.default.removeItem(atPath: statePath)
             log("update: writing helper failed: \(error.localizedDescription)")
-            showUpdateCouldNotStart(detail: "Parakey couldn't write the update helper script.")
+            showUpdateCouldNotStart(detail: "Speakex couldn't write the update helper script.")
             return
         }
         let helperLog: PrivateOutputFile
@@ -14398,7 +14398,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             try? FileManager.default.removeItem(atPath: helperPath)
             try? FileManager.default.removeItem(atPath: statePath)
             log("update: opening helper log failed: \(error.localizedDescription)")
-            showUpdateCouldNotStart(detail: "Parakey couldn't open the update helper log.")
+            showUpdateCouldNotStart(detail: "Speakex couldn't open the update helper log.")
             return
         }
 
@@ -14412,7 +14412,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             try? FileManager.default.removeItem(atPath: statePath)
             helperLog.handle.closeFile()
             log("update: launching progress app failed: \(error.localizedDescription)")
-            showUpdateCouldNotStart(detail: "Parakey couldn't open the update progress window.")
+            showUpdateCouldNotStart(detail: "Speakex couldn't open the update progress window.")
             return
         }
 
@@ -14428,9 +14428,9 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             try? FileManager.default.removeItem(atPath: helperPath)
             helperLog.handle.closeFile()
             try? writePrivateUpdateProgressState(phase: "failed",
-                                                 message: "Parakey couldn't launch the update helper.",
+                                                 message: "Speakex couldn't launch the update helper.",
                                                  to: statePath)
-            showUpdateCouldNotStart(detail: "Parakey couldn't launch the update helper.")
+            showUpdateCouldNotStart(detail: "Speakex couldn't launch the update helper.")
             return
         }
         log("update helper spawned \(privacySafeLogPath(helperPath)), progress app \(privacySafeLogPath(progressAppPath)), logging to \(privacySafeLogPath(helperLog.path)); quitting for upgrade")
@@ -14452,7 +14452,7 @@ final class ParakeyApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         guard last != current else { return }
         log("upgrade detected: \(last) → \(current); checking for stale TCC state")
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.local.superdictate"
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.local.speakex"
         for p in Permission.allCases {
             if Permissions.isGranted(p) { continue }
             // Fire-and-forget on TCC's serial queue: these resets are
@@ -14478,7 +14478,7 @@ private enum SelfTestFailure: Error, CustomStringConvertible {
     }
 }
 
-private enum ParakeySelfTest {
+private enum SpeakexSelfTest {
     static func run(arguments: [String]) -> Int32? {
         guard arguments.count >= 2, arguments[0] == "--self-test" else { return nil }
         guard arguments.count == 2 else { return fail("usage") }
@@ -14713,8 +14713,8 @@ private enum ParakeySelfTest {
 
     private static func testPrivateLogAppend() throws {
         try expect(
-            privacySafeLogPath("/Users/example/Documents/Parakey Diagnostics.txt"),
-            equals: "Parakey Diagnostics.txt",
+            privacySafeLogPath("/Users/example/Documents/Speakex Diagnostics.txt"),
+            equals: "Speakex Diagnostics.txt",
             "log path labels should omit parent directories"
         )
         try expect(
@@ -14723,23 +14723,23 @@ private enum ParakeySelfTest {
             "log path labels should fall back when no filename is available"
         )
         try expect(
-            privacySafeBundlePath("/Applications/SuperDictate.app"),
-            equals: "/Applications/SuperDictate.app",
+            privacySafeBundlePath("/Applications/SPEAKEX.app"),
+            equals: "/Applications/SPEAKEX.app",
             "bundle path labels should keep the canonical install path"
         )
         try expect(
-            privacySafeBundlePath("/Users/example/Downloads/SuperDictate.app"),
-            equals: "SuperDictate.app",
+            privacySafeBundlePath("/Users/example/Downloads/SPEAKEX.app"),
+            equals: "SPEAKEX.app",
             "bundle path labels should omit parent directories for nonstandard installs"
         )
 
         let fm = FileManager.default
         let root = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("parakey-log-test-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("speakex-log-test-\(UUID().uuidString)", isDirectory: true)
         try fm.createDirectory(at: root, withIntermediateDirectories: false)
         defer { try? fm.removeItem(at: root) }
 
-        let logFile = root.appendingPathComponent("SuperDictate.log")
+        let logFile = root.appendingPathComponent("SPEAKEX.log")
         try appendPrivateLogData(Data("one\n".utf8), to: logFile)
         try appendPrivateLogData(Data("two\n".utf8), to: logFile)
 
@@ -14806,8 +14806,8 @@ private enum ParakeySelfTest {
                 appVersion: "9.8.7",
                 appBuild: "123",
                 macOS: "Version 26.0",
-                bundleID: "com.local.superdictate",
-                bundlePath: "/Applications/SuperDictate.app",
+                bundleID: "com.local.speakex",
+                bundlePath: "/Applications/SPEAKEX.app",
                 installKind: "Applications app",
                 status: "Hold Right Option to dictate",
                 startup: "Runtime ready",
@@ -14827,7 +14827,7 @@ private enum ParakeySelfTest {
                 ],
                 updateLines: ["Pending update: none"],
                 microphoneLines: ["Selected: System default", "Available inputs: none reported"],
-                logPath: "~/Library/Logs/SuperDictate.log",
+                logPath: "~/Library/Logs/SPEAKEX.log",
                 recentLogLines: ["[10:00:00] release: 1.23 s captured, transcribing"]
             )
         )
@@ -14847,11 +14847,11 @@ private enum ParakeySelfTest {
 
         let fm = FileManager.default
         let root = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("parakey-diagnostics-test-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("speakex-diagnostics-test-\(UUID().uuidString)", isDirectory: true)
         try fm.createDirectory(at: root, withIntermediateDirectories: false)
         defer { try? fm.removeItem(at: root) }
 
-        let logFile = root.appendingPathComponent("SuperDictate.log")
+        let logFile = root.appendingPathComponent("SPEAKEX.log")
         for line in 1...6 {
             try appendPrivateLogData(Data("[10:00:0\(line)] line \(line)\n".utf8), to: logFile)
         }
@@ -14949,7 +14949,7 @@ private enum ParakeySelfTest {
         )
         try expect(
             hotkeyRecordingDecision(for: event(.keyDown, keycode: 0)),
-            equals: .reject("Choose a right-side modifier key or an F-key. Typing keys are not safe because Parakey suppresses its dictation key globally."),
+            equals: .reject("Choose a right-side modifier key or an F-key. Typing keys are not safe because Speakex suppresses its dictation key globally."),
             "hotkey recorder should reject typing keys"
         )
         try expect(
@@ -15000,7 +15000,7 @@ private enum ParakeySelfTest {
             ),
             equals: .rolledBack(
                 previous: f5,
-                message: "Parakey could not save that hotkey, so it kept F5."
+                message: "Speakex could not save that hotkey, so it kept F5."
             ),
             "hotkey preference update should roll back when persisted settings disagree"
         )
@@ -15308,7 +15308,7 @@ private enum ParakeySelfTest {
         )
 
         let pasteboardProbe = MainActor.assumeIsolated {
-            let pasteboardName = NSPasteboard.Name("com.local.superdictate.self-test.\(UUID().uuidString)")
+            let pasteboardName = NSPasteboard.Name("com.local.speakex.self-test.\(UUID().uuidString)")
             let pasteboard = NSPasteboard(name: pasteboardName)
             let wrote = ClipboardPasteInserter.write("pasteboard probe", to: pasteboard)
             let snapshot = PasteboardSnapshot.capture(from: pasteboard)
@@ -15820,13 +15820,13 @@ private enum ParakeySelfTest {
         let applied = TranscriptCorrector.apply(
             to: "parakeet tdt and parakeetish and PARakeet",
             corrections: [
-                TranscriptCorrection(source: "parakeet", replacement: "Parakey"),
+                TranscriptCorrection(source: "parakeet", replacement: "Speakex"),
                 TranscriptCorrection(source: "parakeet tdt", replacement: "Parakeet TDT")
             ]
         )
         try expect(
             applied.text,
-            equals: "Parakeet TDT and parakeetish and Parakey",
+            equals: "Parakeet TDT and parakeetish and Speakex",
             "corrections should prefer longer phrases and respect word boundaries"
         )
         try expect(
@@ -15871,7 +15871,7 @@ private enum ParakeySelfTest {
         let transferTmpDir = URL(fileURLWithPath: NSTemporaryDirectory())
         let transferFileManager = FileManager.default
         let oversized = transferTmpDir
-            .appendingPathComponent("parakey-corrections-oversized-\(UUID().uuidString).json")
+            .appendingPathComponent("speakex-corrections-oversized-\(UUID().uuidString).json")
         try Data(repeating: 0x20, count: TranscriptCorrectionsTransfer.maxFileBytes + 1)
             .write(to: oversized)
         defer { try? transferFileManager.removeItem(at: oversized) }
@@ -15887,7 +15887,7 @@ private enum ParakeySelfTest {
                    "correction transfer should reject oversized files before decoding")
 
         let nonFile = transferTmpDir
-            .appendingPathComponent("parakey-corrections-directory-\(UUID().uuidString)")
+            .appendingPathComponent("speakex-corrections-directory-\(UUID().uuidString)")
         try transferFileManager.createDirectory(at: nonFile, withIntermediateDirectories: false)
         defer { try? transferFileManager.removeItem(at: nonFile) }
         var nonFileRejected = false
@@ -15902,14 +15902,14 @@ private enum ParakeySelfTest {
                    "correction transfer should reject non-file paths")
 
         let readTarget = transferTmpDir
-            .appendingPathComponent("parakey-corrections-read-target-\(UUID().uuidString).json")
+            .appendingPathComponent("speakex-corrections-read-target-\(UUID().uuidString).json")
         try TranscriptCorrectionsTransfer.write(
             [TranscriptCorrection(source: "source", replacement: "replacement")],
             to: readTarget
         )
         defer { try? transferFileManager.removeItem(at: readTarget) }
         let readLink = transferTmpDir
-            .appendingPathComponent("parakey-corrections-read-link-\(UUID().uuidString).json")
+            .appendingPathComponent("speakex-corrections-read-link-\(UUID().uuidString).json")
         try transferFileManager.createSymbolicLink(at: readLink, withDestinationURL: readTarget)
         defer { try? transferFileManager.removeItem(at: readLink) }
         var symlinkReadRejected = false
@@ -15924,11 +15924,11 @@ private enum ParakeySelfTest {
                    "correction transfer should reject reads through leaf symlinks")
 
         let writeTarget = transferTmpDir
-            .appendingPathComponent("parakey-corrections-write-target-\(UUID().uuidString).json")
+            .appendingPathComponent("speakex-corrections-write-target-\(UUID().uuidString).json")
         try Data("target\n".utf8).write(to: writeTarget)
         defer { try? transferFileManager.removeItem(at: writeTarget) }
         let writeLink = transferTmpDir
-            .appendingPathComponent("parakey-corrections-write-link-\(UUID().uuidString).json")
+            .appendingPathComponent("speakex-corrections-write-link-\(UUID().uuidString).json")
         try transferFileManager.createSymbolicLink(at: writeLink, withDestinationURL: writeTarget)
         defer { try? transferFileManager.removeItem(at: writeLink) }
         var symlinkWriteRejected = false
@@ -16000,19 +16000,19 @@ private enum ParakeySelfTest {
             "sync merge should report same-source edits that changed differently on both sides"
         )
 
-        let normalizedSyncPath = normalizedCorrectionSyncFilePath(" /tmp/superdictate/../SuperDictate Corrections.superdictate-corrections\n")
+        let normalizedSyncPath = normalizedCorrectionSyncFilePath(" /tmp/speakex/../SPEAKEX Corrections.speakex-corrections\n")
         try expect(
             normalizedSyncPath,
-            equals: "/tmp/SuperDictate Corrections.superdictate-corrections",
+            equals: "/tmp/SPEAKEX Corrections.speakex-corrections",
             "correction sync path normalization should trim and standardize absolute paths"
         )
         try expect(
-            normalizedCorrectionSyncFilePath("relative/path.superdictate-corrections"),
+            normalizedCorrectionSyncFilePath("relative/path.speakex-corrections"),
             equals: nil,
             "correction sync path normalization should reject relative paths"
         )
         try expect(
-            normalizedCorrectionSyncFilePath("/tmp/\u{0}superdictate.superdictate-corrections"),
+            normalizedCorrectionSyncFilePath("/tmp/\u{0}speakex.speakex-corrections"),
             equals: nil,
             "correction sync path normalization should reject NUL bytes"
         )
@@ -16027,18 +16027,18 @@ private enum ParakeySelfTest {
         // the periodic auto-write to overwrite an unrelated file.
         let tmpDir = URL(fileURLWithPath: NSTemporaryDirectory())
         let fm = FileManager.default
-        let nonexistent = tmpDir.appendingPathComponent("parakey-sync-test-missing-\(UUID().uuidString).json")
+        let nonexistent = tmpDir.appendingPathComponent("speakex-sync-test-missing-\(UUID().uuidString).json")
         try validateCorrectionSyncPath(nonexistent) // missing files are allowed (first-time write)
 
-        let regular = tmpDir.appendingPathComponent("parakey-sync-test-regular-\(UUID().uuidString).json")
+        let regular = tmpDir.appendingPathComponent("speakex-sync-test-regular-\(UUID().uuidString).json")
         try Data("{}".utf8).write(to: regular)
         defer { try? fm.removeItem(at: regular) }
         try validateCorrectionSyncPath(regular)
 
-        let target = tmpDir.appendingPathComponent("parakey-sync-test-target-\(UUID().uuidString).json")
+        let target = tmpDir.appendingPathComponent("speakex-sync-test-target-\(UUID().uuidString).json")
         try Data("{}".utf8).write(to: target)
         defer { try? fm.removeItem(at: target) }
-        let link = tmpDir.appendingPathComponent("parakey-sync-test-link-\(UUID().uuidString).json")
+        let link = tmpDir.appendingPathComponent("speakex-sync-test-link-\(UUID().uuidString).json")
         try fm.createSymbolicLink(at: link, withDestinationURL: target)
         defer { try? fm.removeItem(at: link) }
         var rejected = false
@@ -16055,7 +16055,7 @@ private enum ParakeySelfTest {
             "unsafe sync paths should stop configured correction sync"
         )
         try expect(
-            shouldStopCorrectionSync(afterPathValidationError: NSError(domain: "ParakeyTest", code: 1)),
+            shouldStopCorrectionSync(afterPathValidationError: NSError(domain: "SpeakexTest", code: 1)),
             equals: false,
             "unrelated sync errors should not clear the configured correction sync path"
         )
@@ -16065,8 +16065,8 @@ private enum ParakeySelfTest {
             "correction sync fingerprinting should not follow leaf symlinks"
         )
 
-        let sameSizeA = tmpDir.appendingPathComponent("parakey-sync-fingerprint-a-\(UUID().uuidString).json")
-        let sameSizeB = tmpDir.appendingPathComponent("parakey-sync-fingerprint-b-\(UUID().uuidString).json")
+        let sameSizeA = tmpDir.appendingPathComponent("speakex-sync-fingerprint-a-\(UUID().uuidString).json")
+        let sameSizeB = tmpDir.appendingPathComponent("speakex-sync-fingerprint-b-\(UUID().uuidString).json")
         try Data("aaaa".utf8).write(to: sameSizeA)
         try Data("bbbb".utf8).write(to: sameSizeB)
         defer {
@@ -16166,7 +16166,7 @@ private enum ParakeySelfTest {
         // the file in the write-to-fingerprint window is still detected
         // by the next scan.
         let fingerprintWriteTarget = tmpDir
-            .appendingPathComponent("parakey-sync-written-fingerprint-\(UUID().uuidString).json")
+            .appendingPathComponent("speakex-sync-written-fingerprint-\(UUID().uuidString).json")
         let fingerprintWrittenData = try TranscriptCorrectionsTransfer.write(
             [TranscriptCorrection(source: "fingerprint", replacement: "match")],
             to: fingerprintWriteTarget
@@ -16220,14 +16220,14 @@ private enum ParakeySelfTest {
         // Import dialog copy: state the original count when entries
         // will be dropped, and warn before a cap-overflowing merge.
         try expect(
-            correctionImportCountText(sourceName: "file.superdictate-corrections",
+            correctionImportCountText(sourceName: "file.speakex-corrections",
                                       originalCount: 3,
                                       keptCount: 3),
-            equals: "file.superdictate-corrections contains 3 corrections.",
+            equals: "file.speakex-corrections contains 3 corrections.",
             "import count text should stay simple when nothing is dropped"
         )
         let truncatedImportText = correctionImportCountText(
-            sourceName: "big.superdictate-corrections",
+            sourceName: "big.speakex-corrections",
             originalCount: MAX_TRANSCRIPT_CORRECTIONS + 88,
             keptCount: MAX_TRANSCRIPT_CORRECTIONS
         )
@@ -16549,7 +16549,7 @@ private enum ParakeySelfTest {
 
         let fm = FileManager.default
         let root = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("parakey-model-integrity-\(UUID().uuidString)",
+            .appendingPathComponent("speakex-model-integrity-\(UUID().uuidString)",
                                     isDirectory: true)
         let modelDir = root.appendingPathComponent("Toy.mlmodelc", isDirectory: true)
         try fm.createDirectory(at: modelDir, withIntermediateDirectories: true)
@@ -16664,7 +16664,7 @@ private enum ParakeySelfTest {
     private static func testSpeechModelCachePathSafety() throws {
         let fm = FileManager.default
         let root = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("parakey-cache-safety-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("speakex-cache-safety-\(UUID().uuidString)", isDirectory: true)
         let support = root.appendingPathComponent("FluidAudio", isDirectory: true)
         let cache = support.appendingPathComponent("Models/parakeet-v3", isDirectory: true)
         try fm.createDirectory(at: cache, withIntermediateDirectories: true)
@@ -16766,7 +16766,7 @@ private enum ParakeySelfTest {
                                        httpVersion: nil,
                                        headerFields: nil)!
         let releaseData = Data(
-            #"{"tag_name":"v9.8.7","body":"Notes","html_url":"https://github.com/shlgd/SuperDictate/releases/tag/v9.8.7"}"#.utf8
+            #"{"tag_name":"v9.8.7","body":"Notes","html_url":"https://github.com/raxmiev/SPEAKEX/releases/tag/v9.8.7"}"#.utf8
         )
 
         try expect(
@@ -16774,7 +16774,7 @@ private enum ParakeySelfTest {
             equals: .success(GitHubRelease(tagName: "v9.8.7",
                                            version: "9.8.7",
                                            body: "Notes",
-                                           htmlURL: "https://github.com/shlgd/SuperDictate/releases/tag/v9.8.7")),
+                                           htmlURL: "https://github.com/raxmiev/SPEAKEX/releases/tag/v9.8.7")),
             "update parsing should decode typed GitHub release payloads"
         )
         try expect(
@@ -16793,7 +16793,7 @@ private enum ParakeySelfTest {
         )
         let oversizedReleaseData = Data(
             """
-            {"tag_name":"v9.8.7","body":"\(String(repeating: "x", count: UpdateCheck.maxReleaseResponseBytes))","html_url":"https://github.com/shlgd/SuperDictate/releases/tag/v9.8.7"}
+            {"tag_name":"v9.8.7","body":"\(String(repeating: "x", count: UpdateCheck.maxReleaseResponseBytes))","html_url":"https://github.com/raxmiev/SPEAKEX/releases/tag/v9.8.7"}
             """.utf8
         )
         try expect(
@@ -16864,7 +16864,7 @@ private enum ParakeySelfTest {
         )
         try expect(
             UpdateCheck.parseLatest(
-                data: Data(#"{"tag_name":"v9.8.7","html_url":"https://github.com/shlgd/SuperDictate/releases/tag/v9.8.8"}"#.utf8),
+                data: Data(#"{"tag_name":"v9.8.7","html_url":"https://github.com/raxmiev/SPEAKEX/releases/tag/v9.8.8"}"#.utf8),
                 response: ok
             ),
             equals: .success(GitHubRelease(tagName: "v9.8.7",
@@ -16916,19 +16916,19 @@ private enum ParakeySelfTest {
             "stored app version normalization should reject oversized numeric components"
         )
         try expect(
-            UpdateCheck.sanitizedReleaseURL("http://github.com/shlgd/SuperDictate/releases/tag/v9.8.7",
+            UpdateCheck.sanitizedReleaseURL("http://github.com/raxmiev/SPEAKEX/releases/tag/v9.8.7",
                                             expectedTag: "v9.8.7"),
             equals: GITHUB_RELEASES_PAGE.absoluteString,
             "release URL sanitizing should require HTTPS"
         )
         try expect(
-            UpdateCheck.sanitizedReleaseURL("https://user@github.com/shlgd/SuperDictate/releases/tag/v9.8.7",
+            UpdateCheck.sanitizedReleaseURL("https://user@github.com/raxmiev/SPEAKEX/releases/tag/v9.8.7",
                                             expectedTag: "v9.8.7"),
             equals: GITHUB_RELEASES_PAGE.absoluteString,
             "release URL sanitizing should reject userinfo"
         )
         try expect(
-            UpdateCheck.sanitizedReleaseURL("https://github.com/shlgd/SuperDictate/releases/tag/v9.8.7?download=1",
+            UpdateCheck.sanitizedReleaseURL("https://github.com/raxmiev/SPEAKEX/releases/tag/v9.8.7?download=1",
                                             expectedTag: "v9.8.7"),
             equals: GITHUB_RELEASES_PAGE.absoluteString,
             "release URL sanitizing should reject query strings"
@@ -17081,8 +17081,8 @@ private enum ParakeySelfTest {
         )
         let updateEnv = updateProcessEnvironment(current: [
             "LANG": "C\nbad",
-            "USER": "parakey-user",
-            "LOGNAME": "parakey-logname",
+            "USER": "speakex-user",
+            "LOGNAME": "speakex-logname",
             "__CF_USER_TEXT_ENCODING": "0x1F5:0x0:0x0",
             "BASH_ENV": "/tmp/pwn.sh",
             "ENV": "/tmp/pwn.sh",
@@ -17097,9 +17097,9 @@ private enum ParakeySelfTest {
                    "update environment should use a deterministic PATH")
         try expect(updateEnv["LANG"], equals: Optional("en_US.UTF-8"),
                    "update environment should reject unsafe locale values")
-        try expect(updateEnv["USER"], equals: Optional("parakey-user"),
+        try expect(updateEnv["USER"], equals: Optional("speakex-user"),
                    "update environment should preserve a safe USER value")
-        try expect(updateEnv["LOGNAME"], equals: Optional("parakey-logname"),
+        try expect(updateEnv["LOGNAME"], equals: Optional("speakex-logname"),
                    "update environment should preserve a safe LOGNAME value")
         for key in ["BASH_ENV", "ENV", "SHELLOPTS", "RUBYOPT", "HOMEBREW_BOTTLE_DOMAIN"] {
             try expect(updateEnv[key], equals: String?.none,
@@ -17107,7 +17107,7 @@ private enum ParakeySelfTest {
         }
         let systemEnv = systemToolProcessEnvironment(current: [
             "LANG": "en_GB.UTF-8",
-            "USER": "parakey-user",
+            "USER": "speakex-user",
             "BASH_ENV": "/tmp/pwn.sh",
             "DYLD_INSERT_LIBRARIES": "/tmp/pwn.dylib",
             "PATH": "/tmp/bin",
@@ -17116,7 +17116,7 @@ private enum ParakeySelfTest {
                    "system tool environment should not include Homebrew or inherited PATH entries")
         try expect(systemEnv["LANG"], equals: Optional("en_GB.UTF-8"),
                    "system tool environment should preserve a safe locale")
-        try expect(systemEnv["USER"], equals: Optional("parakey-user"),
+        try expect(systemEnv["USER"], equals: Optional("speakex-user"),
                    "system tool environment should preserve a safe USER value")
         for key in ["BASH_ENV", "DYLD_INSERT_LIBRARIES"] {
             try expect(systemEnv[key], equals: String?.none,
@@ -17126,27 +17126,27 @@ private enum ParakeySelfTest {
         let script = updateHelperScript(pid: 123,
                                         brewPath: "/opt/homebrew/bin/brew",
                                         targetVersion: "9.8.7",
-                                        statePath: "/tmp/parakey-update.state",
-                                        appPath: "/Applications/SuperDictate.app",
+                                        statePath: "/tmp/speakex-update.state",
+                                        appPath: "/Applications/SPEAKEX.app",
                                         releasesPageURL: "https://example.test/releases")
         for fragment in [
             "umask 077",
             "TARGET_VERSION='9.8.7'",
-            "STATE_PATH='/tmp/parakey-update.state'",
-            "PARAKEY_PID=123",
+            "STATE_PATH='/tmp/speakex-update.state'",
+            "SPEAKEX_PID=123",
             "SCRIPT_PATH=\"$0\"",
             "trap cleanup EXIT",
             "/bin/rm -f \"$SCRIPT_PATH\"",
             "printf '[%s] %s\\n' \"$(timestamp)\" \"$*\"",
             "printf '%s\\t%s\\n' \"$phase\" \"$message\" >\"$tmp\"",
-            "CASK_TAP='shlgd/superdictate'",
-            "CASK_TOKEN='shlgd/superdictate/superdictate'",
-            "CASK_INSTALLED_TOKEN='parakey'",
+            "CASK_TAP='raxmiev/speakex'",
+            "CASK_TOKEN='raxmiev/speakex/speakex'",
+            "CASK_INSTALLED_TOKEN='speakex'",
             "PlistBuddy -c \"Print :CFBundleShortVersionString\"",
             "version_at_least \"$installed\" \"$TARGET_VERSION\"",
-            "state \"preparing\" \"Preparing Homebrew for Parakey v$TARGET_VERSION...\"",
-            "state \"downloading\" \"Downloading Parakey v$TARGET_VERSION...\"",
-            "state \"installing\" \"Installing Parakey v$TARGET_VERSION...\"",
+            "state \"preparing\" \"Preparing Homebrew for Speakex v$TARGET_VERSION...\"",
+            "state \"downloading\" \"Downloading Speakex v$TARGET_VERSION...\"",
+            "state \"installing\" \"Installing Speakex v$TARGET_VERSION...\"",
             "run_brew tap \"$CASK_TAP\"",
             "run_brew update --force",
             "run_brew fetch --cask --force \"$CASK_TOKEN\"",
@@ -17154,7 +17154,7 @@ private enum ParakeySelfTest {
             "run_brew reinstall --cask --force --appdir=\"$APP_DIR\" \"$CASK_TOKEN\"",
             "installed_target_version",
             "sleep 2",
-            "state \"complete\" \"Parakey v$TARGET_VERSION is installed.\"",
+            "state \"complete\" \"Speakex v$TARGET_VERSION is installed.\"",
             "/usr/bin/open \"$APP_PATH\""
         ] {
             guard script.contains(fragment) else {
@@ -17168,7 +17168,7 @@ private enum ParakeySelfTest {
         }
 
         let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("parakey-update-self-test-\(UUID().uuidString).sh")
+            .appendingPathComponent("speakex-update-self-test-\(UUID().uuidString).sh")
         try script.write(to: tmp, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: tmp) }
 
@@ -17185,7 +17185,7 @@ private enum ParakeySelfTest {
 
         let fm = FileManager.default
         let helperRoot = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("parakey-update-helper-test-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("speakex-update-helper-test-\(UUID().uuidString)", isDirectory: true)
         try fm.createDirectory(at: helperRoot, withIntermediateDirectories: false)
         defer { try? fm.removeItem(at: helperRoot) }
 
@@ -17249,7 +17249,7 @@ private enum ParakeySelfTest {
             "update helper script writer should leave symlink targets untouched"
         )
 
-        let preferredLog = helperRoot.appendingPathComponent("SuperDictate-update.log")
+        let preferredLog = helperRoot.appendingPathComponent("SPEAKEX-update.log")
         let helperLog = try openPrivateUpdateHelperLog(preferredPath: preferredLog.path,
                                                        fallbackDirectory: helperRoot.path)
         helperLog.handle.write(Data("log\n".utf8))
@@ -17313,8 +17313,8 @@ private enum ParakeySelfTest {
     private static func testUpdateProgressState() throws {
         let launch = UpdateProgressLaunch(arguments: [
             UPDATE_PROGRESS_ARGUMENT,
-            "/tmp/parakey.state",
-            "/tmp/parakey.log",
+            "/tmp/speakex.state",
+            "/tmp/speakex.log",
             "9.8.7",
             "/tmp/\(UPDATE_PROGRESS_APP_PREFIX)test.app",
         ])
@@ -17323,7 +17323,7 @@ private enum ParakeySelfTest {
         try expect(launch?.targetVersion, equals: Optional("9.8.7"),
                    "update progress launch should retain target version")
         try expect(
-            UpdateProgressLaunch(arguments: [UPDATE_PROGRESS_ARGUMENT, "", "/tmp/parakey.log", "9.8.7", "/tmp/app"]) != nil,
+            UpdateProgressLaunch(arguments: [UPDATE_PROGRESS_ARGUMENT, "", "/tmp/speakex.log", "9.8.7", "/tmp/app"]) != nil,
             equals: false,
             "update progress launch should reject empty paths"
         )
@@ -17361,10 +17361,10 @@ private enum ParakeySelfTest {
             .appendingPathComponent("\(UPDATE_PROGRESS_APP_PREFIX)test.app")
         try expect(isSafeUpdateProgressCleanupPath(safeCleanupPath), equals: true,
                    "update progress cleanup should allow copied temp app bundles")
-        try expect(isSafeUpdateProgressCleanupPath("/Applications/SuperDictate.app"), equals: false,
+        try expect(isSafeUpdateProgressCleanupPath("/Applications/SPEAKEX.app"), equals: false,
                    "update progress cleanup should reject non-temp app bundles")
         let unsafeTempPath = (NSTemporaryDirectory() as NSString)
-            .appendingPathComponent("Parakey.app")
+            .appendingPathComponent("Speakex.app")
         try expect(isSafeUpdateProgressCleanupPath(unsafeTempPath), equals: false,
                    "update progress cleanup should reject temp app bundles without the copied-helper prefix")
     }
@@ -17501,7 +17501,7 @@ private enum ParakeySelfTest {
         )
 
         let recoveryURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("superdictate-recovery-test-\(UUID().uuidString)")
+            .appendingPathComponent("speakex-recovery-test-\(UUID().uuidString)")
             .appendingPathExtension("sdaudio")
         defer { try? FileManager.default.removeItem(at: recoveryURL) }
         let expectedSamples: [Float] = [-0.75, -0.125, 0, 0.25, 0.875]
@@ -17535,12 +17535,12 @@ private enum ParakeySelfTest {
 
         let processed = processedDictationText(
             rawTranscript: "  Um, parakeet is fast.  ",
-            corrections: [TranscriptCorrection(source: "parakeet", replacement: "Parakey")],
+            corrections: [TranscriptCorrection(source: "parakeet", replacement: "Speakex")],
             removeFillerWords: true
         )
         try expect(
             processed,
-            equals: DictationTextProcessingResult(text: "Parakey is fast.",
+            equals: DictationTextProcessingResult(text: "Speakex is fast.",
                                                   appliedCorrectionCount: 1,
                                                   removedFillerWordCount: 1),
             "dictation text processing should trim, apply corrections, then remove fillers"
@@ -17548,12 +17548,12 @@ private enum ParakeySelfTest {
 
         let preservedFillers = processedDictationText(
             rawTranscript: "  Um, parakeet is fast.  ",
-            corrections: [TranscriptCorrection(source: "parakeet", replacement: "Parakey")],
+            corrections: [TranscriptCorrection(source: "parakeet", replacement: "Speakex")],
             removeFillerWords: false
         )
         try expect(
             preservedFillers,
-            equals: DictationTextProcessingResult(text: "Um, Parakey is fast.",
+            equals: DictationTextProcessingResult(text: "Um, Speakex is fast.",
                                                   appliedCorrectionCount: 1,
                                                   removedFillerWordCount: 0),
             "dictation text processing should preserve fillers when the setting is off"
@@ -17702,7 +17702,7 @@ private enum ParakeySelfTest {
 
         let fm = FileManager.default
         let root = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("parakey-mute-marker-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("speakex-mute-marker-\(UUID().uuidString)", isDirectory: true)
         try fm.createDirectory(at: root, withIntermediateDirectories: false)
         defer { try? fm.removeItem(at: root) }
 
@@ -18220,13 +18220,13 @@ private enum ParakeySelfTest {
     }
 }
 
-if let status = ParakeySelfTest.run(arguments: Array(CommandLine.arguments.dropFirst())) {
+if let status = SpeakexSelfTest.run(arguments: Array(CommandLine.arguments.dropFirst())) {
     exit(status)
 }
 #endif
 
 @MainActor
-private final class SuperDictateControlPanelApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
+private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow?
     private var refreshTimer: Timer?
     private let settings = Settings.shared
@@ -18234,14 +18234,14 @@ private final class SuperDictateControlPanelApp: NSObject, NSApplicationDelegate
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
-        if SuperDictateControlPanelRegistry.activateExistingPanelIfPresent() {
+        if SPEAKEXControlPanelRegistry.activateExistingPanelIfPresent() {
             NSApp.terminate(nil)
             return
         }
-        SuperDictateControlPanelRegistry.claimCurrentPanel()
-        if settings.agentEnabled && !SuperDictateAgentService.isAgentRunning() {
+        SPEAKEXControlPanelRegistry.claimCurrentPanel()
+        if settings.agentEnabled && !SPEAKEXAgentService.isAgentRunning() {
             do {
-                try SuperDictateAgentService.installAndStart()
+                try SPEAKEXAgentService.installAndStart()
             } catch {
                 showError(title: "Couldn't Start Dictation Service", detail: error.localizedDescription)
             }
@@ -18262,7 +18262,7 @@ private final class SuperDictateControlPanelApp: NSObject, NSApplicationDelegate
     func applicationWillTerminate(_ notification: Notification) {
         refreshTimer?.invalidate()
         refreshTimer = nil
-        SuperDictateControlPanelRegistry.clearCurrentPanel()
+        SPEAKEXControlPanelRegistry.clearCurrentPanel()
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -18281,7 +18281,7 @@ private final class SuperDictateControlPanelApp: NSObject, NSApplicationDelegate
                               styleMask: [.titled, .closable, .miniaturizable],
                               backing: .buffered,
                               defer: false)
-        window.title = "SuperDictate"
+        window.title = "SPEAKEX"
         window.isReleasedWhenClosed = false
         window.delegate = self
         self.window = window
@@ -18317,7 +18317,7 @@ private final class SuperDictateControlPanelApp: NSObject, NSApplicationDelegate
         root.edgeInsets = NSEdgeInsets(top: 22, left: 24, bottom: 20, right: 24)
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let title = panelLabel("SuperDictate", size: 24, weight: .semibold)
+        let title = panelLabel("SPEAKEX", size: 24, weight: .semibold)
         let subtitle = panelLabel("Control panel. Closing this window does not stop dictation.",
                                   size: 13,
                                   color: .secondaryLabelColor)
@@ -18378,7 +18378,7 @@ private final class SuperDictateControlPanelApp: NSObject, NSApplicationDelegate
     }
 
     private func serviceStatusView() -> NSView {
-        let running = SuperDictateAgentService.isAgentRunning()
+        let running = SPEAKEXAgentService.isAgentRunning()
         let state = AgentRuntimeStateStore.read()
         let statusText: String
         let detailText: String
@@ -18605,7 +18605,7 @@ private final class SuperDictateControlPanelApp: NSObject, NSApplicationDelegate
     @objc private func startAgentClicked(_ sender: NSButton) {
         settings.agentEnabled = true
         do {
-            try SuperDictateAgentService.installAndStart()
+            try SPEAKEXAgentService.installAndStart()
         } catch {
             showError(title: "Couldn't Start Dictation Service", detail: error.localizedDescription)
         }
@@ -18615,7 +18615,7 @@ private final class SuperDictateControlPanelApp: NSObject, NSApplicationDelegate
     @objc private func restartAgentClicked(_ sender: NSButton) {
         settings.agentEnabled = true
         do {
-            try SuperDictateAgentService.restart()
+            try SPEAKEXAgentService.restart()
         } catch {
             showError(title: "Couldn't Restart Dictation Service", detail: error.localizedDescription)
         }
@@ -18631,7 +18631,7 @@ private final class SuperDictateControlPanelApp: NSObject, NSApplicationDelegate
         alert.addButton(withTitle: "Stop Service")
         guard alert.runModal() == .alertSecondButtonReturn else { return }
         settings.agentEnabled = false
-        SuperDictateAgentService.stop()
+        SPEAKEXAgentService.stop()
         refresh()
     }
 
@@ -18702,7 +18702,7 @@ let app = NSApplication.shared
 let launchArguments = Array(CommandLine.arguments.dropFirst())
 if launchArguments.first == RECORDING_HUD_EXPORT_ARGUMENT {
     guard launchArguments.count == 2 else {
-        fputs("usage: SuperDictate --export-hud-animation <frames-directory>\n", stderr)
+        fputs("usage: SPEAKEX --export-hud-animation <frames-directory>\n", stderr)
         exit(EXIT_FAILURE)
     }
     do {
@@ -18719,7 +18719,7 @@ if launchArguments.first == RECORDING_HUD_EXPORT_ARGUMENT {
     app.run()
 } else if launchArguments.contains(AGENT_ARGUMENT) {
     app.setActivationPolicy(.accessory)
-    let delegate = ParakeyApp()
+    let delegate = SpeakexApp()
     app.delegate = delegate
     // Refuse to start under a tampered launch environment that would
     // redirect FluidAudio's model download to an attacker-controlled host.
@@ -18728,7 +18728,7 @@ if launchArguments.first == RECORDING_HUD_EXPORT_ARGUMENT {
     refuseHostileRegistryEnvironmentAndExit()
     app.run()
 } else {
-    let delegate = SuperDictateControlPanelApp()
+    let delegate = SPEAKEXControlPanelApp()
     app.delegate = delegate
     app.run()
 }
