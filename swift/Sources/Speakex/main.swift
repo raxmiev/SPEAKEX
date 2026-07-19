@@ -142,6 +142,16 @@ let RIGHT_MODIFIER_HOTKEY_CHOICES: [HotkeyChoice] = [
     HotkeyChoice(name: "Right Command", keycode: 54, isModifier: true, modifierFlag: .maskCommand),
 ]
 
+// Left-side modifiers work with the same flagsChanged tracking, but a
+// modifier hotkey fires on the bare press, so a left modifier also
+// triggers at the start of every ordinary shortcut chord (⌘C, ⌥Tab…).
+// They are offered with an explicit conflict warning in the panel.
+let LEFT_MODIFIER_HOTKEY_CHOICES: [HotkeyChoice] = [
+    HotkeyChoice(name: "Left Control", keycode: 59, isModifier: true, modifierFlag: .maskControl),
+    HotkeyChoice(name: "Left Option", keycode: 58, isModifier: true, modifierFlag: .maskAlternate),
+    HotkeyChoice(name: "Left Command", keycode: 55, isModifier: true, modifierFlag: .maskCommand),
+]
+
 let FUNCTION_KEY_NAMES_BY_KEYCODE: [CGKeyCode: String] = [
     122: "F1",
     120: "F2",
@@ -178,6 +188,9 @@ let HOTKEY_CHOICES: [HotkeyChoice] = [
 
 func recordableHotkeyChoice(forKeycode keycode: CGKeyCode) -> HotkeyChoice? {
     if let choice = RIGHT_MODIFIER_HOTKEY_CHOICES.first(where: { $0.keycode == keycode }) {
+        return choice
+    }
+    if let choice = LEFT_MODIFIER_HOTKEY_CHOICES.first(where: { $0.keycode == keycode }) {
         return choice
     }
     if let name = FUNCTION_KEY_NAMES_BY_KEYCODE[keycode] {
@@ -346,6 +359,22 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Settings": ["ru": "Настройки", "uz": "Sozlamalar"],
     "Dictation service": ["ru": "Служба диктовки", "uz": "Diktovka xizmati"],
     "Dictation key": ["ru": "Клавиша диктовки", "uz": "Diktovka tugmasi"],
+    "Right Command": ["ru": "Правый Command", "uz": "O‘ng Command"],
+    "Right Option": ["ru": "Правый Option", "uz": "O‘ng Option"],
+    "Right Control": ["ru": "Правый Control", "uz": "O‘ng Control"],
+    "Left Command": ["ru": "Левый Command", "uz": "Chap Command"],
+    "Left Option": ["ru": "Левый Option", "uz": "Chap Option"],
+    "Left Control": ["ru": "Левый Control", "uz": "Chap Control"],
+    "Left Option (conflicts with ⌥ shortcuts)": ["ru": "Левый Option (конфликтует с ⌥-комбинациями)", "uz": "Chap Option (⌥ birikmalari bilan to‘qnashadi)"],
+    "Left Command (conflicts with ⌘ shortcuts)": ["ru": "Левый Command (конфликтует с ⌘-комбинациями)", "uz": "Chap Command (⌘ birikmalari bilan to‘qnashadi)"],
+    "Left Control (conflicts with ⌃ shortcuts)": ["ru": "Левый Control (конфликтует с ⌃-комбинациями)", "uz": "Chap Control (⌃ birikmalari bilan to‘qnashadi)"],
+    "F5 (needs Fn on laptops)": ["ru": "F5 (на ноутбуке нужен Fn)", "uz": "F5 (noutbukda Fn kerak)"],
+    "F6 (needs Fn on laptops)": ["ru": "F6 (на ноутбуке нужен Fn)", "uz": "F6 (noutbukda Fn kerak)"],
+    "F13 (no conflicts)": ["ru": "F13 (без конфликтов)", "uz": "F13 (to‘qnashuvsiz)"],
+    "F16 (no conflicts)": ["ru": "F16 (без конфликтов)", "uz": "F16 (to‘qnashuvsiz)"],
+    "F17 (no conflicts)": ["ru": "F17 (без конфликтов)", "uz": "F17 (to‘qnashuvsiz)"],
+    "F18 (no conflicts)": ["ru": "F18 (без конфликтов)", "uz": "F18 (to‘qnashuvsiz)"],
+    "F19 (no conflicts)": ["ru": "F19 (без конфликтов)", "uz": "F19 (to‘qnashuvsiz)"],
     "Interface language": ["ru": "Язык интерфейса", "uz": "Interfeys tili"],
     "Interface Language": ["ru": "Язык интерфейса", "uz": "Interfeys tili"],
     "Language of the SPEAKEX menus and panel.": ["ru": "Язык меню и панели SPEAKEX.", "uz": "SPEAKEX menyulari va paneli tili."],
@@ -438,6 +467,9 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Option+Command sends Enter": ["ru": "Option+Command отправляет Enter", "uz": "Option+Command Enter yuboradi"],
     "Mute system audio while recording": ["ru": "Глушить звук системы во время записи", "uz": "Yozish paytida tizim ovozini o‘chirish"],
     "Play feedback sounds": ["ru": "Звуковые сигналы", "uz": "Ovozli signallar"],
+    "Chimes when dictation starts and stops.": ["ru": "Сигналы при начале и окончании диктовки.", "uz": "Diktovka boshlanishi va tugashida signallar."],
+    "Show icon in the menu bar": ["ru": "Показывать иконку в строке меню", "uz": "Menyu qatorida ikonkani ko‘rsatish"],
+    "Quick access to settings and history next to the clock.": ["ru": "Быстрый доступ к настройкам и истории рядом с часами.", "uz": "Soat yonida sozlamalar va tarixga tezkor kirish."],
     "Automatically check for updates": ["ru": "Автоматически проверять обновления", "uz": "Yangilanishlarni avtomatik tekshirish"],
     "Periodically checks GitHub for a newer release and only notifies you.": ["ru": "Периодически проверяет GitHub и только уведомляет о новой версии.", "uz": "Vaqti-vaqti bilan GitHubni tekshiradi va faqat xabar beradi."],
     "Launch at Login": ["ru": "Запускать при входе", "uz": "Kirishda ishga tushirish"],
@@ -2535,6 +2567,7 @@ final class Settings: @unchecked Sendable {
     private static let legacyKeyShowRecordingIndicator = "show_recording_indicator"
     private static let keyMuteWhileRecording = "mute_while_recording"
     private static let keyPlayFeedbackSounds = "play_feedback_sounds"
+    private static let keyShowMenuBarIcon = "show_menu_bar_icon"
     private static let keyShowInDock = "show_in_dock"
     private static let keyInputDevice = "input_device"
     private static let keyCheckForUpdates = "check_for_updates"
@@ -2787,6 +2820,14 @@ final class Settings: @unchecked Sendable {
             return defaults.bool(forKey: Self.keyPlayFeedbackSounds)
         }
         set { defaults.set(newValue, forKey: Self.keyPlayFeedbackSounds) }
+    }
+
+    var showMenuBarIcon: Bool {
+        get {
+            if defaults.object(forKey: Self.keyShowMenuBarIcon) == nil { return true }
+            return defaults.bool(forKey: Self.keyShowMenuBarIcon)
+        }
+        set { defaults.set(newValue, forKey: Self.keyShowMenuBarIcon) }
     }
 
     var showInDock: Bool {
@@ -8816,7 +8857,11 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         configureStatusItemImage()
-        concealMenuBarIcon()
+        if settings.showMenuBarIcon {
+            revealMenuBarIcon()
+        } else {
+            concealMenuBarIcon()
+        }
         setMenuBarState(.loading)
         startCorrectionSyncIfConfigured()
         rebuildMenu()
@@ -9541,6 +9586,12 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         statusItem.length = 0
         statusItem.button?.isHidden = true
         statusItem.button?.toolTip = nil
+    }
+
+    private func revealMenuBarIcon() {
+        statusItem.length = NSStatusItem.squareLength
+        statusItem.button?.isHidden = false
+        statusItem.button?.toolTip = "Speakex"
     }
 
     private func tintedCopy(of source: NSImage, with color: NSColor) -> NSImage {
@@ -11698,7 +11749,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let template = settings.triggerMode == .hold
                 ? L("Hold %@ to dictate.")
                 : L("Press %@ to dictate.")
-            return ("ready", String(format: template, hotkey.hotkey.name))
+            return ("ready", String(format: template, L(hotkey.hotkey.name)))
         }
         if let failure = startupFailure {
             return ("error", failure.detail)
@@ -11933,7 +11984,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let template = settings.triggerMode == .hold
                 ? L("Hold %@ to dictate")
                 : L("Press %@ to dictate")
-            return String(format: template, hotkey.hotkey.name)
+            return String(format: template, L(hotkey.hotkey.name))
         }
         if let failure = startupFailure {
             return failure.statusTitle
@@ -12587,6 +12638,13 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         dock.state = settings.showInDock ? .on : .off
         sub.addItem(dock)
 
+        let menuBarIcon = NSMenuItem(title: L("Show icon in the menu bar"),
+                                     action: #selector(toggleMenuBarIcon(_:)),
+                                     keyEquivalent: "")
+        menuBarIcon.target = self
+        menuBarIcon.state = settings.showMenuBarIcon ? .on : .off
+        sub.addItem(menuBarIcon)
+
         sub.addItem(.separator())
         sub.addItem(buildInterfaceLanguageItem())
 
@@ -12615,6 +12673,16 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard let raw = sender.representedObject as? String,
               let language = UILanguage(rawValue: raw) else { return }
         settings.uiLanguage = language
+        rebuildMenu()
+    }
+
+    @objc private func toggleMenuBarIcon(_ sender: NSMenuItem) {
+        settings.showMenuBarIcon.toggle()
+        if settings.showMenuBarIcon {
+            revealMenuBarIcon()
+        } else {
+            concealMenuBarIcon()
+        }
         rebuildMenu()
     }
 
@@ -18475,6 +18543,12 @@ if let status = SpeakexSelfTest.run(arguments: Array(CommandLine.arguments.dropF
 }
 #endif
 
+/// Flipped so the scrolled panel content anchors to the top-left like
+/// every other macOS settings window.
+private final class PanelScrollContentView: NSView {
+    override var isFlipped: Bool { true }
+}
+
 @MainActor
 private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow?
@@ -18527,11 +18601,12 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             return
         }
 
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 620),
-                              styleMask: [.titled, .closable, .miniaturizable],
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 680),
+                              styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered,
                               defer: false)
         window.title = "SPEAKEX"
+        window.contentMinSize = NSSize(width: 620, height: 400)
         window.isReleasedWhenClosed = false
         window.delegate = self
         self.window = window
@@ -18556,7 +18631,15 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     }
 
     private func refresh() {
+        // The panel rebuilds every second; keep the scroll position so
+        // the refresh is invisible to the user.
+        let previousOffset = (window?.contentView as? NSScrollView)?.contentView.bounds.origin
         window?.contentView = makeContentView()
+        if let previousOffset,
+           let scroll = window?.contentView as? NSScrollView {
+            scroll.contentView.scroll(to: previousOffset)
+            scroll.reflectScrolledClipView(scroll.contentView)
+        }
     }
 
     private func makeContentView() -> NSView {
@@ -18587,12 +18670,43 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
 
         root.addArrangedSubview(separator())
         root.addArrangedSubview(sectionLabel(L("Settings")))
-        root.addArrangedSubview(infoRow(title: L("Dictation key"),
-                                        detail: "\(hotkeyChoice(forKeycode: settings.hotkeyKeycode).name), \(L(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue.lowercased()))"))
+        var hotkeyOptions: [(title: String, value: String)] = [
+            (L("Right Option"), "61"),
+            (L("Right Command"), "54"),
+            (L("Right Control"), "62"),
+            (L("Left Option (conflicts with ⌥ shortcuts)"), "58"),
+            (L("Left Command (conflicts with ⌘ shortcuts)"), "55"),
+            (L("Left Control (conflicts with ⌃ shortcuts)"), "59"),
+            (L("F5 (needs Fn on laptops)"), "96"),
+            (L("F6 (needs Fn on laptops)"), "97"),
+            (L("F13 (no conflicts)"), "105"),
+            (L("F16 (no conflicts)"), "106"),
+            (L("F17 (no conflicts)"), "64"),
+            (L("F18 (no conflicts)"), "79"),
+            (L("F19 (no conflicts)"), "80"),
+        ]
+        let currentHotkeyValue = String(Int(settings.hotkeyKeycode))
+        if !hotkeyOptions.contains(where: { $0.value == currentHotkeyValue }) {
+            hotkeyOptions.insert((hotkeyChoice(forKeycode: settings.hotkeyKeycode).name,
+                                  currentHotkeyValue), at: 0)
+        }
+        root.addArrangedSubview(popupRow(title: L("Dictation key"),
+                                         detail: L(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue.lowercased()),
+                                         selectedValue: currentHotkeyValue,
+                                         options: hotkeyOptions,
+                                         action: #selector(selectHotkeyClicked(_:))))
         root.addArrangedSubview(checkboxRow(title: L("Option + Command sends Enter"),
                                             detail: L("On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter."),
                                             isOn: settings.optionCommandEnterAfterDictation,
                                             action: #selector(toggleOptionCommandEnterClicked(_:))))
+        root.addArrangedSubview(checkboxRow(title: L("Play feedback sounds"),
+                                            detail: L("Chimes when dictation starts and stops."),
+                                            isOn: settings.playFeedbackSounds,
+                                            action: #selector(toggleFeedbackSoundsClicked(_:))))
+        root.addArrangedSubview(checkboxRow(title: L("Show icon in the menu bar"),
+                                            detail: L("Quick access to settings and history next to the clock."),
+                                            isOn: settings.showMenuBarIcon,
+                                            action: #selector(toggleMenuBarIconClicked(_:))))
         root.addArrangedSubview(popupRow(title: L("Recording color"),
                                          detail: L("Color used while the microphone is listening."),
                                          selectedValue: settings.recordingHUDRecordingColor.rawValue,
@@ -18614,13 +18728,14 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                                          options: UILanguage.allCases.map { ($0.displayName, $0.rawValue) },
                                          action: #selector(selectUILanguageClicked(_:))))
 
-        let container = NSView()
+        let container = PanelScrollContentView()
         container.addSubview(root)
+        container.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             root.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             root.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             root.topAnchor.constraint(equalTo: container.topAnchor),
-            root.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor),
+            root.bottomAnchor.constraint(equalTo: container.bottomAnchor),
             root.widthAnchor.constraint(equalToConstant: 620),
         ])
 
@@ -18629,7 +18744,18 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             view.widthAnchor.constraint(equalTo: root.widthAnchor,
                                         constant: innerWidthInset).isActive = true
         }
-        return container
+
+        let scroll = NSScrollView()
+        scroll.hasVerticalScroller = true
+        scroll.autohidesScrollers = true
+        scroll.drawsBackground = false
+        scroll.documentView = container
+        NSLayoutConstraint.activate([
+            container.leadingAnchor.constraint(equalTo: scroll.contentView.leadingAnchor),
+            container.topAnchor.constraint(equalTo: scroll.contentView.topAnchor),
+            container.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor),
+        ])
+        return scroll
     }
 
     private func serviceStatusView() -> NSView {
@@ -18896,6 +19022,34 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
 
     @objc private func toggleOptionCommandEnterClicked(_ sender: NSButton) {
         settings.optionCommandEnterAfterDictation = sender.state == .on
+        refresh()
+    }
+
+    @objc private func toggleFeedbackSoundsClicked(_ sender: NSButton) {
+        settings.playFeedbackSounds = sender.state == .on
+        refresh()
+    }
+
+    @objc private func selectHotkeyClicked(_ sender: NSPopUpButton) {
+        guard let raw = sender.selectedItem?.representedObject as? String,
+              let value = Int(raw),
+              let keycode = normalizedHotkeyKeycode(storedValue: value) else { return }
+        settings.hotkeyKeycode = keycode
+        // The agent applies the hotkey at launch; restart it so the
+        // new key is live immediately.
+        if SPEAKEXAgentService.isAgentRunning() {
+            try? SPEAKEXAgentService.restart()
+        }
+        refresh()
+    }
+
+    @objc private func toggleMenuBarIconClicked(_ sender: NSButton) {
+        settings.showMenuBarIcon = sender.state == .on
+        // The icon lives in the agent process; restart it so the
+        // change applies immediately.
+        if SPEAKEXAgentService.isAgentRunning() {
+            try? SPEAKEXAgentService.restart()
+        }
         refresh()
     }
 
