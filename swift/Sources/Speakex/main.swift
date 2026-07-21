@@ -508,52 +508,32 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "⚠ Grant %@ (try again — will reset stuck state)…": ["ru": "⚠ Выдать %@ (ещё раз — сбросит зависшее состояние)…", "uz": "⚠ %@ (yana — osilib qolgan holatni tiklaydi)…"],
     // AI features
     "AI features": ["ru": "Функции ИИ", "uz": "AI funksiyalari"],
-    "OpenAI API key": ["ru": "API-ключ OpenAI", "uz": "OpenAI API kaliti"],
-    "Stored only on this Mac. Needed for text correction and the cloud speech model.": ["ru": "Хранится только на этом Mac. Нужен для корректировки текста и облачной модели распознавания.", "uz": "Faqat shu Macda saqlanadi. Matn tuzatish va bulutli nutq modeli uchun kerak."],
     "Configured": ["ru": "Настроен", "uz": "Sozlangan"],
     "Not set": ["ru": "Не задано", "uz": "Belgilanmagan"],
     "Text correction instructions": ["ru": "Инструкции к корректировке текста", "uz": "Matn tuzatish ko‘rsatmalari"],
     "Translator instructions": ["ru": "Инструкции переводчику", "uz": "Tarjimon uchun ko‘rsatmalar"],
     "Extra style or terminology guidance for the corrector. Always added on top of the built-in rule: only fix errors, never rewrite.": ["ru": "Дополнительные указания по стилю или терминологии для корректора. Всегда добавляются поверх встроенного правила: только исправлять ошибки, не переписывать.", "uz": "Tuzatuvchi uchun uslub yoki atama bo‘yicha qo‘shimcha ko‘rsatmalar. Har doim asosiy qoida ustiga qo‘shiladi: faqat xatolarni tuzatish, qayta yozmaslik."],
     "Extra tone or terminology guidance for the translator.": ["ru": "Дополнительные указания по тону или терминологии для переводчика.", "uz": "Tarjimon uchun ohang yoki atama bo‘yicha qo‘shimcha ko‘rsatmalar."],
-    "Not configured": ["ru": "Не настроен", "uz": "Sozlanmagan"],
-    "Enter Key…": ["ru": "Ввести ключ…", "uz": "Kalit kiritish…"],
-    "Enter your OpenAI API key": ["ru": "Введите API-ключ OpenAI", "uz": "OpenAI API kalitini kiriting"],
-    "The key is stored only on this Mac in a file readable only by you. Leave empty to remove the saved key.": ["ru": "Ключ хранится только на этом Mac в файле, доступном только вам. Оставьте поле пустым, чтобы удалить сохранённый ключ.", "uz": "Kalit faqat shu Macda, faqat sizga ochiq faylda saqlanadi. O‘chirish uchun bo‘sh qoldiring."],
     "Save": ["ru": "Сохранить", "uz": "Saqlash"],
-    "Couldn't Save API Key": ["ru": "Не удалось сохранить API-ключ", "uz": "API kalitni saqlab bo‘lmadi"],
-    "OpenAI API key required": ["ru": "Нужен API-ключ OpenAI", "uz": "OpenAI API kaliti kerak"],
-    "OpenAI API Key: Configured": ["ru": "API-ключ OpenAI: настроен", "uz": "OpenAI API kaliti: sozlangan"],
-    "Enter OpenAI API Key…": ["ru": "Ввести API-ключ OpenAI…", "uz": "OpenAI API kalitini kiritish…"],
-    "An OpenAI API key is required for AI features.": ["ru": "Для функций ИИ нужен API-ключ OpenAI.", "uz": "AI funksiyalari uchun OpenAI API kaliti kerak."],
     "Text correction (AI)": ["ru": "Корректировка текста (ИИ)", "uz": "Matnni AI tuzatishi"],
-    "Fixes recognition errors and grammar via the OpenAI API. Only the text is sent to the cloud.": ["ru": "Исправляет ошибки распознавания и грамматику через OpenAI API. В облако отправляется только текст.", "uz": "OpenAI API orqali xatolar va grammatika tuzatiladi. Bulutga faqat matn yuboriladi."],
-    "Fixes recognition errors and grammar via the OpenAI API. Adds roughly 1–3s before text appears (network round trip). Only the text is sent to the cloud.": ["ru": "Исправляет ошибки распознавания и грамматику через OpenAI API. Добавляет примерно 1–3 с перед вставкой текста (запрос по сети). В облако отправляется только текст.", "uz": "OpenAI API orqali xatolar va grammatika tuzatiladi. Matn chiqishidan oldin taxminan 1–3 soniya qo‘shadi (tarmoq so‘rovi). Bulutga faqat matn yuboriladi."],
+    "Fixes recognition errors and grammar via SPEAKEX's server. Adds roughly 1–3s before text appears (network round trip). Only the text is sent to the cloud.": ["ru": "Исправляет ошибки распознавания и грамматику через сервер SPEAKEX. Добавляет примерно 1–3 с перед вставкой текста (запрос по сети). В облако отправляется только текст.", "uz": "SPEAKEX serveri orqali xatolar va grammatika tuzatiladi. Matn chiqishidan oldin taxminan 1–3 soniya qo‘shadi (tarmoq so‘rovi). Bulutga faqat matn yuboriladi."],
     "Recognition": ["ru": "Распознавание", "uz": "Tanib olish"],
     "Open SPEAKEX Panel…": ["ru": "Открыть панель SPEAKEX…", "uz": "SPEAKEX panelini ochish…"],
     "Language": ["ru": "Язык", "uz": "Til"],
     "Auto": ["ru": "Авто", "uz": "Avto"],
     "Uzbek": ["ru": "Узбекский", "uz": "O‘zbekcha"],
-    "Uzbek (cloud model)": ["ru": "Узбекский (облачная модель)", "uz": "O‘zbekcha (bulut modeli)"],
     "Uzbek — Premium": ["ru": "Узбекский — Премиум", "uz": "O‘zbekcha — Premium"],
     "Russian / English (auto)": ["ru": "Русский / English (авто)", "uz": "Ruscha / English (avto)"],
     "Uzbek needs the cloud speech model — Premium.": ["ru": "Узбекскому нужна облачная модель распознавания — Премиум.", "uz": "O‘zbekcha uchun bulutli nutq modeli kerak — Premium."],
-    "Uzbek is available only with the cloud speech model.": ["ru": "Узбекский доступен только с облачной моделью распознавания.", "uz": "O‘zbekcha faqat bulutli model bilan ishlaydi."],
-    "Uzbek needs the cloud speech model and an OpenAI API key. Enter the key first.": ["ru": "Для узбекского нужна облачная модель и API-ключ OpenAI. Сначала введите ключ.", "uz": "O‘zbekcha uchun bulutli model va OpenAI API kaliti kerak. Avval kalitni kiriting."],
     "Uzbek needs the cloud model": ["ru": "Узбекскому нужна облачная модель", "uz": "O‘zbekcha bulut modelini talab qiladi"],
     "The local model cannot recognize Uzbek. Change the language first, or keep the cloud model.": ["ru": "Локальная модель не распознаёт узбекский. Сначала смените язык или оставьте облачную модель.", "uz": "Lokal model o‘zbekchani tanimaydi. Avval tilni o‘zgartiring yoki bulut modelini qoldiring."],
-    "To unlock AI features, enter your OpenAI API key. Get one at platform.openai.com: sign up, add a card under Billing, then create a key in the API keys section.": ["ru": "Чтобы разблокировать функции ИИ, введите API-ключ OpenAI. Как получить: platform.openai.com → регистрация → привязать карту в разделе Billing → раздел API keys → Create new secret key.", "uz": "AI funksiyalarini ochish uchun OpenAI API kalitini kiriting. Olish: platform.openai.com → ro‘yxatdan o‘tish → Billing bo‘limida karta qo‘shish → API keys → Create new secret key."],
-    "Configured. Text correction and the translator are unlocked.": ["ru": "Настроен. Корректировка текста и переводчик разблокированы.", "uz": "Sozlangan. Matn tuzatish va tarjimon ochilgan."],
     "Translator": ["ru": "Переводчик", "uz": "Tarjimon"],
     "Translator off": ["ru": "Выключен", "uz": "O‘chirilgan"],
     "Choose a language to translate the dictation into.": ["ru": "Выберите язык, на который переводить надиктованный текст.", "uz": "Diktovka qaysi tilga tarjima qilinishini tanlang."],
     "Speech model": ["ru": "Модель распознавания", "uz": "Nutq modeli"],
     "Parakeet v3 (local, free)": ["ru": "Parakeet v3 (локально, бесплатно)", "uz": "Parakeet v3 (lokal, bepul)"],
-    "OpenAI Cloud (needs API key)": ["ru": "OpenAI Облако (нужен API-ключ)", "uz": "OpenAI Bulut (API kalit kerak)"],
     "Parakeet v3 — Local · Free": ["ru": "Parakeet v3 — Локально · Бесплатно", "uz": "Parakeet v3 — Lokal · Bepul"],
-    "OpenAI Cloud — Cloud · API key": ["ru": "OpenAI Cloud — Облако · Нужен API-ключ", "uz": "OpenAI Cloud — Bulut · API kalit kerak"],
     "OpenAI Cloud — Cloud · Premium": ["ru": "OpenAI Cloud — Облако · Премиум", "uz": "OpenAI Cloud — Bulut · Premium"],
-    "An OpenAI API key is required for the cloud speech model.": ["ru": "Для облачной модели распознавания нужен API-ключ OpenAI.", "uz": "Bulutli nutq modeli uchun OpenAI API kaliti kerak."],
     "The local model stays available offline; the cloud model is more accurate.": ["ru": "Локальная модель работает офлайн; облачная — точнее.", "uz": "Lokal model oflayn ishlaydi; bulutli model aniqroq."],
     "Transcription model": ["ru": "Модель транскрибации", "uz": "Transkripsiya modeli"],
     "Only applies to the cloud speech model.": ["ru": "Применяется только с облачной моделью распознавания.", "uz": "Faqat bulutli nutq modeliga tegishli."],
@@ -683,36 +663,23 @@ enum TranslatorDirection: String, CaseIterable {
     }
 }
 
-/// The OpenAI API key lives in a 0600 file under the app's support
-/// directory — not in UserDefaults (world-readable plist) and not in
-/// the Keychain (ad-hoc re-signing would trigger access prompts on
-/// every rebuild).
-enum OpenAIKeyStore {
-    private static func keyFileURL() throws -> URL {
-        try speakexApplicationSupportDirectory()
-            .appendingPathComponent("openai_api_key", isDirectory: false)
-    }
+/// SPEAKEX's own server (see ~/speakex-proxy) — holds the real OpenAI
+/// key server-side and enforces free/premium quota, so the app never
+/// asks a user for their own API key. Every proxied request carries
+/// `DeviceIdentity.current` as `x-speakex-device-id` so the server can
+/// bucket usage per install.
+enum SpeakexProxy {
+    static let baseURL = "https://speakex-proxy.vercel.app"
 
-    static func read() -> String? {
-        guard let url = try? keyFileURL(),
-              let raw = try? String(contentsOf: url, encoding: .utf8) else { return nil }
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
+    /// Non-nil (with a user-facing message) when the proxy rejected
+    /// the request itself — free-tier monthly limit reached — rather
+    /// than forwarding to OpenAI. Distinguishes that from any other
+    /// HTTP failure so the log/error says why, not just "HTTP 429".
+    static func quotaExceededMessage(from data: Data) -> String? {
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              obj["error"] as? String == "quota_exceeded" else { return nil }
+        return obj["message"] as? String ?? "Free-tier monthly limit reached. Upgrade to Premium for unlimited use."
     }
-
-    static func write(_ key: String) throws {
-        let url = try keyFileURL()
-        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty {
-            try? FileManager.default.removeItem(at: url)
-            return
-        }
-        try trimmed.write(to: url, atomically: true, encoding: .utf8)
-        try FileManager.default.setAttributes([.posixPermissions: 0o600],
-                                              ofItemAtPath: url.path)
-    }
-
-    static var isConfigured: Bool { read() != nil }
 }
 
 /// A random, anonymous ID generated once per install and persisted
@@ -752,7 +719,6 @@ func cloudSpeechLanguageCode(processing: ProcessingLanguage,
 /// block on the network.
 enum TextPolisher {
     static func polish(_ text: String,
-                       apiKey: String,
                        model: String,
                        processingLanguage: ProcessingLanguage,
                        glossary: [TranscriptCorrection],
@@ -779,11 +745,10 @@ enum TextPolisher {
         if !customInstructions.isEmpty {
             system += "\n\nAdditional style/terminology guidance from the user (does not override the rules above — still only correct errors, never rewrite):\n\(customInstructions)"
         }
-        return await chat(system: system, user: text, apiKey: apiKey, model: model)
+        return await chat(system: system, user: text, model: model, purpose: "correction")
     }
 
     static func translate(_ text: String,
-                          apiKey: String,
                           model: String,
                           direction: TranslatorDirection,
                           customInstructions: String = "") async -> String? {
@@ -798,14 +763,14 @@ enum TextPolisher {
         if !customInstructions.isEmpty {
             system += "\n\nAdditional style/terminology guidance from the user (does not override the rules above):\n\(customInstructions)"
         }
-        return await chat(system: system, user: text, apiKey: apiKey, model: model)
+        return await chat(system: system, user: text, model: model, purpose: "translation")
     }
 
     private static func chat(system: String,
                              user text: String,
-                             apiKey: String,
-                             model: String) async -> String? {
-        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
+                             model: String,
+                             purpose: String) async -> String? {
+        var request = URLRequest(url: URL(string: "\(SpeakexProxy.baseURL)/api/chat")!)
         request.httpMethod = "POST"
         // Runs on the critical path before text is inserted (see the
         // release-handling pipeline) — a short ceiling bounds how long
@@ -813,7 +778,8 @@ enum TextPolisher {
         // back to the raw transcript.
         request.timeoutInterval = 8
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(DeviceIdentity.current, forHTTPHeaderField: "x-speakex-device-id")
+        request.setValue(purpose, forHTTPHeaderField: "x-speakex-purpose")
         let payload: [String: Any] = [
             "model": model,
             "messages": [
@@ -828,43 +794,44 @@ enum TextPolisher {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
                 let status = (response as? HTTPURLResponse)?.statusCode ?? -1
-                log("text polish: HTTP \(status)")
+                if let quotaMessage = SpeakexProxy.quotaExceededMessage(from: data) {
+                    log("\(purpose): \(quotaMessage)")
+                } else {
+                    log("\(purpose): HTTP \(status)")
+                }
                 return nil
             }
             guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let choices = obj["choices"] as? [[String: Any]],
                   let message = choices.first?["message"] as? [String: Any],
                   let content = message["content"] as? String else {
-                log("text polish: unexpected response shape")
+                log("\(purpose): unexpected response shape")
                 return nil
             }
             let polished = content.trimmingCharacters(in: .whitespacesAndNewlines)
             return polished.isEmpty ? nil : polished
         } catch {
-            log("text polish failed: \(error.localizedDescription)")
+            log("\(purpose) failed: \(error.localizedDescription)")
             return nil
         }
     }
 }
 
-/// Cloud speech recognition via OpenAI. Audio is uploaded as a 16 kHz
-/// mono WAV; the 25 MB API limit allows roughly 13 minutes per clip.
+/// Cloud speech recognition, proxied through SPEAKEX's own server
+/// (see SpeakexProxy) rather than calling OpenAI directly — the app
+/// never holds an OpenAI key. Audio is uploaded as a 16 kHz mono WAV;
+/// the 25 MB API limit allows roughly 13 minutes per clip.
 enum OpenAICloudASR {
     static func transcribe(samples: [Float],
                            languageCode: String?,
                            model: String = "gpt-4o-transcribe",
                            prompt: String = "") async throws -> String {
-        guard let apiKey = OpenAIKeyStore.read() else {
-            throw NSError(domain: "Speakex", code: -10, userInfo: [
-                NSLocalizedDescriptionKey: "OpenAI API key is not configured. Enter it in the SPEAKEX panel or switch to the local speech model.",
-            ])
-        }
         let wav = wavData(fromMonoSamples: samples, sampleRate: SAMPLE_RATE)
         let boundary = "speakex-\(UUID().uuidString)"
-        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/audio/transcriptions")!)
+        var request = URLRequest(url: URL(string: "\(SpeakexProxy.baseURL)/api/transcribe")!)
         request.httpMethod = "POST"
         request.timeoutInterval = 120
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(DeviceIdentity.current, forHTTPHeaderField: "x-speakex-device-id")
         request.setValue("multipart/form-data; boundary=\(boundary)",
                          forHTTPHeaderField: "Content-Type")
 
@@ -887,19 +854,24 @@ enum OpenAICloudASR {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {
             throw NSError(domain: "Speakex", code: -11, userInfo: [
-                NSLocalizedDescriptionKey: "No HTTP response from the OpenAI transcription API.",
+                NSLocalizedDescriptionKey: "No response from the SPEAKEX server.",
             ])
         }
         guard http.statusCode == 200 else {
+            if let quotaMessage = SpeakexProxy.quotaExceededMessage(from: data) {
+                throw NSError(domain: "Speakex", code: http.statusCode, userInfo: [
+                    NSLocalizedDescriptionKey: quotaMessage,
+                ])
+            }
             let detail = String(data: data.prefix(300), encoding: .utf8) ?? ""
             throw NSError(domain: "Speakex", code: http.statusCode, userInfo: [
-                NSLocalizedDescriptionKey: "OpenAI transcription failed (HTTP \(http.statusCode)). \(detail)",
+                NSLocalizedDescriptionKey: "Cloud transcription failed (HTTP \(http.statusCode)). \(detail)",
             ])
         }
         guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let text = obj["text"] as? String else {
             throw NSError(domain: "Speakex", code: -12, userInfo: [
-                NSLocalizedDescriptionKey: "Unexpected response from the OpenAI transcription API.",
+                NSLocalizedDescriptionKey: "Unexpected response from the SPEAKEX server.",
             ])
         }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -5297,11 +5269,6 @@ actor TranscriptionWorker {
         let t0 = Date()
         switch profile {
         case .openaiCloud:
-            guard OpenAIKeyStore.isConfigured else {
-                throw NSError(domain: "Speakex", code: -9, userInfo: [
-                    NSLocalizedDescriptionKey: "OpenAI API key is not configured. Enter it in the SPEAKEX panel, or switch back to the local speech model.",
-                ])
-            }
             engine = .openAICloud
         default:
             engine = .parakeetV3(try await loadParakeetV3(progressHandler: progressHandler))
@@ -11078,13 +11045,12 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                         log("filler words removed: \(processed.removedFillerWordCount)")
                     }
                     var cleaned = processed.text
-                    if !cleaned.isEmpty, let aiKey = OpenAIKeyStore.read() {
+                    if !cleaned.isEmpty {
                         let aiStartedAt = ProcessInfo.processInfo.systemUptime
                         let direction = settings.translatorDirection
                         if direction != .off {
                             if let translated = await TextPolisher.translate(
                                 cleaned,
-                                apiKey: aiKey,
                                 model: settings.textPolishModel,
                                 direction: direction,
                                 customInstructions: settings.translatorCustomInstructions
@@ -11098,7 +11064,6 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                         } else if settings.textPolishEnabled {
                             if let polished = await TextPolisher.polish(
                                 cleaned,
-                                apiKey: aiKey,
                                 model: settings.textPolishModel,
                                 processingLanguage: settings.processingLanguage,
                                 glossary: settings.transcriptCorrections,
@@ -12735,7 +12700,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 "Trigger mode: \(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue)",
                 "Speech model: \(speechModelProfile.displayName)",
                 "Language: \(languageSettingText)",
-                "OpenAI API key configured: \(OpenAIKeyStore.isConfigured)",
+                "Install ID: \(DeviceIdentity.current)",
                 "Text correction (AI): \(settings.textPolishEnabled)",
                 "Translator: \(settings.translatorDirection.rawValue)",
                 "Paste behavior: \(PASTE_SUFFIX_DISPLAY[settings.pasteSuffix] ?? settings.pasteSuffix.rawValue)",
@@ -13298,10 +13263,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             item.target = self
             item.state = (profile == settings.speechModelProfile) ? .on : .off
             item.representedObject = profile.rawValue
-            item.isEnabled = !busy && (profile != .openaiCloud || OpenAIKeyStore.isConfigured)
-            if profile == .openaiCloud, !OpenAIKeyStore.isConfigured {
-                item.toolTip = L("An OpenAI API key is required for the cloud speech model.")
-            }
+            item.isEnabled = !busy
             sub.addItem(item)
         }
         parent.submenu = sub
@@ -13351,28 +13313,12 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let parent = NSMenuItem(title: L("AI features"), action: nil, keyEquivalent: "")
         let sub = NSMenu()
         sub.autoenablesItems = false
-        let unlocked = OpenAIKeyStore.isConfigured
-
-        let keyItem = NSMenuItem(title: unlocked ? L("OpenAI API Key: Configured") : L("Enter OpenAI API Key…"),
-                                 action: #selector(enterAPIKeyMenuClicked(_:)),
-                                 keyEquivalent: "")
-        keyItem.target = self
-        keyItem.state = unlocked ? .on : .off
-        if !unlocked {
-            keyItem.toolTip = L("To unlock AI features, enter your OpenAI API key. Get one at platform.openai.com: sign up, add a card under Billing, then create a key in the API keys section.")
-        }
-        sub.addItem(keyItem)
-        sub.addItem(.separator())
 
         let polish = NSMenuItem(title: L("Text correction (AI)"),
                                 action: #selector(toggleTextPolishMenuClicked(_:)),
                                 keyEquivalent: "")
         polish.target = self
-        polish.state = (unlocked && settings.textPolishEnabled) ? .on : .off
-        polish.isEnabled = unlocked
-        if !unlocked {
-            polish.toolTip = L("An OpenAI API key is required for AI features.")
-        }
+        polish.state = settings.textPolishEnabled ? .on : .off
         sub.addItem(polish)
 
         let translatorParent = NSMenuItem(title: L("Translator"), action: nil, keyEquivalent: "")
@@ -13385,47 +13331,16 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             item.target = self
             item.state = (direction == settings.translatorDirection) ? .on : .off
             item.representedObject = direction.rawValue
-            item.isEnabled = unlocked || direction == .off
             translatorSub.addItem(item)
         }
         translatorParent.submenu = translatorSub
-        translatorParent.isEnabled = unlocked || settings.translatorDirection != .off
         sub.addItem(translatorParent)
 
         parent.submenu = sub
         return parent
     }
 
-    @objc private func enterAPIKeyMenuClicked(_ sender: NSMenuItem) {
-        showAppForModal()
-        let alert = NSAlert()
-        alert.messageText = L("Enter your OpenAI API key")
-        alert.informativeText = L("The key is stored only on this Mac in a file readable only by you. Leave empty to remove the saved key.")
-        alert.addButton(withTitle: L("Save"))
-        alert.addButton(withTitle: L("Cancel"))
-        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
-        field.placeholderString = "sk-…"
-        if let existing = OpenAIKeyStore.read() {
-            field.stringValue = existing
-        }
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        do {
-            try OpenAIKeyStore.write(field.stringValue)
-            rebuildMenu()
-        } catch {
-            let errorAlert = NSAlert()
-            errorAlert.alertStyle = .warning
-            errorAlert.messageText = L("Couldn't Save API Key")
-            errorAlert.informativeText = error.localizedDescription
-            errorAlert.addButton(withTitle: "OK")
-            errorAlert.runModal()
-        }
-    }
-
     @objc private func toggleTextPolishMenuClicked(_ sender: NSMenuItem) {
-        guard OpenAIKeyStore.isConfigured else { return }
         settings.textPolishEnabled.toggle()
         rebuildMenu()
     }
@@ -13433,7 +13348,6 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func selectTranslatorMenuClicked(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String,
               let direction = TranslatorDirection(rawValue: raw) else { return }
-        guard direction == .off || OpenAIKeyStore.isConfigured else { return }
         settings.translatorDirection = direction
         rebuildMenu()
     }
@@ -19457,7 +19371,6 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             settings.processingLanguage.rawValue,
             settings.translatorDirection.rawValue,
             settings.textPolishEnabled ? "1" : "0",
-            OpenAIKeyStore.isConfigured ? "1" : "0",
             String(settings.hotkeyKeycode),
             settings.triggerMode.rawValue,
             settings.optionCommandEnterAfterDictation ? "1" : "0",
@@ -19611,41 +19524,28 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                      action: #selector(selectUILanguageClicked(_:))),
         ]))
 
-        let aiUnlocked = OpenAIKeyStore.isConfigured
         root.addArrangedSubview(sectionCard(title: L("AI features"), icon: "sparkles", rows: [
-            statusRow(title: L("OpenAI API key"),
-                      detail: aiUnlocked
-                          ? L("Configured. Text correction and the translator are unlocked.")
-                          : L("To unlock AI features, enter your OpenAI API key. Get one at platform.openai.com: sign up, add a card under Billing, then create a key in the API keys section."),
-                      status: aiUnlocked ? L("Configured") : L("Not configured"),
-                      statusColor: aiUnlocked ? .systemGreen : .systemOrange,
-                      buttonTitle: L("Enter Key…"),
-                      action: #selector(enterAPIKeyClicked(_:))),
             checkboxRow(title: L("Text correction (AI)"),
-                        detail: L("Fixes recognition errors and grammar via the OpenAI API. Adds roughly 1–3s before text appears (network round trip). Only the text is sent to the cloud."),
-                        isOn: aiUnlocked && settings.textPolishEnabled,
-                        action: #selector(toggleTextPolishClicked(_:)),
-                        enabled: aiUnlocked),
+                        detail: L("Fixes recognition errors and grammar via SPEAKEX's server. Adds roughly 1–3s before text appears (network round trip). Only the text is sent to the cloud."),
+                        isOn: settings.textPolishEnabled,
+                        action: #selector(toggleTextPolishClicked(_:))),
             popupRow(title: L("Translator"),
                      detail: L("Choose a language to translate the dictation into."),
                      selectedValue: settings.translatorDirection.rawValue,
                      options: TranslatorDirection.allCases.map { ($0.displayName, $0.rawValue) },
-                     action: #selector(selectTranslatorClicked(_:)),
-                     enabled: aiUnlocked),
+                     action: #selector(selectTranslatorClicked(_:))),
             statusRow(title: L("Text correction instructions"),
                       detail: L("Extra style or terminology guidance for the corrector. Always added on top of the built-in rule: only fix errors, never rewrite."),
                       status: settings.textPolishCustomInstructions.isEmpty ? L("Not set") : L("Configured"),
                       statusColor: settings.textPolishCustomInstructions.isEmpty ? .secondaryLabelColor : .systemGreen,
                       buttonTitle: L("Edit…"),
-                      action: #selector(editTextPolishInstructionsClicked(_:)),
-                      buttonEnabled: aiUnlocked),
+                      action: #selector(editTextPolishInstructionsClicked(_:))),
             statusRow(title: L("Translator instructions"),
                       detail: L("Extra tone or terminology guidance for the translator."),
                       status: settings.translatorCustomInstructions.isEmpty ? L("Not set") : L("Configured"),
                       statusColor: settings.translatorCustomInstructions.isEmpty ? .secondaryLabelColor : .systemGreen,
                       buttonTitle: L("Edit…"),
-                      action: #selector(editTranslatorInstructionsClicked(_:)),
-                      buttonEnabled: aiUnlocked),
+                      action: #selector(editTranslatorInstructionsClicked(_:))),
         ]))
 
         root.addArrangedSubview(sectionCard(title: L("History"), icon: "clock.arrow.circlepath", rows: historyRows()))
@@ -20171,33 +20071,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         refresh(force: true)
     }
 
-    @objc private func enterAPIKeyClicked(_ sender: NSButton) {
-        let alert = NSAlert()
-        alert.messageText = L("Enter your OpenAI API key")
-        alert.informativeText = L("The key is stored only on this Mac in a file readable only by you. Leave empty to remove the saved key.")
-        alert.addButton(withTitle: L("Save"))
-        alert.addButton(withTitle: L("Cancel"))
-        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
-        field.placeholderString = "sk-…"
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        do {
-            try OpenAIKeyStore.write(field.stringValue)
-        } catch {
-            showError(title: L("Couldn't Save API Key"), detail: error.localizedDescription)
-        }
-        refresh(force: true)
-    }
-
     @objc private func toggleTextPolishClicked(_ sender: NSButton) {
-        if sender.state == .on, !OpenAIKeyStore.isConfigured {
-            enterAPIKeyClicked(sender)
-            if !OpenAIKeyStore.isConfigured {
-                refresh(force: true)
-                return
-            }
-        }
         settings.textPolishEnabled = sender.state == .on
         refresh(force: true)
     }
@@ -20207,12 +20081,6 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
               let language = ProcessingLanguage(rawValue: raw) else { return }
 
         if language == .uzbek {
-            if !OpenAIKeyStore.isConfigured {
-                showError(title: L("OpenAI API key required"),
-                          detail: L("Uzbek needs the cloud speech model and an OpenAI API key. Enter the key first."))
-                refresh(force: true)
-                return
-            }
             settings.processingLanguage = .uzbek
             if settings.speechModelProfile != .openaiCloud {
                 settings.speechModelProfile = .openaiCloud
@@ -20237,12 +20105,6 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     @objc private func selectTranslatorClicked(_ sender: NSPopUpButton) {
         guard let raw = sender.selectedItem?.representedObject as? String,
               let direction = TranslatorDirection(rawValue: raw) else { return }
-        if direction != .off, !OpenAIKeyStore.isConfigured {
-            showError(title: L("OpenAI API key required"),
-                      detail: L("To unlock AI features, enter your OpenAI API key. Get one at platform.openai.com: sign up, add a card under Billing, then create a key in the API keys section."))
-            refresh(force: true)
-            return
-        }
         settings.translatorDirection = direction
         refresh(force: true)
     }
@@ -20251,12 +20113,6 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         guard let raw = sender.selectedItem?.representedObject as? String,
               let profile = SpeechModelProfile(rawValue: raw),
               profile.isProductionSupported else { return }
-        if profile == .openaiCloud, !OpenAIKeyStore.isConfigured {
-            showError(title: L("OpenAI API key required"),
-                      detail: L("An OpenAI API key is required for the cloud speech model."))
-            refresh(force: true)
-            return
-        }
         if profile != .openaiCloud, settings.processingLanguage == .uzbek {
             showError(title: L("Uzbek needs the cloud model"),
                       detail: L("The local model cannot recognize Uzbek. Change the language first, or keep the cloud model."))
