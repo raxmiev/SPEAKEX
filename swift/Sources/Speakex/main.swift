@@ -19651,6 +19651,14 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     /// background panel with a heading, replacing the old flat
     /// heading + hairline-separator layout so sections read as blocks
     /// at a glance.
+    /// Plain custom NSBox used only for its chrome (border/fill/corner
+    /// radius). Deliberately does NOT use `NSBox.contentView` — that
+    /// API relies on NSBox's own imperative frame layout, which fights
+    /// Auto Layout once the content view opts out of the autoresizing
+    /// mask (as every other view in this panel does), collapsing the
+    /// whole card to zero size. Pinning a plain subview to the box's
+    /// own edges with explicit constraints — the same pattern already
+    /// used for the outer scroll content — avoids that entirely.
     private func sectionCard(title: String, rows: [NSView]) -> NSView {
         let card = NSBox()
         card.boxType = .custom
@@ -19659,12 +19667,13 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         card.borderWidth = 1
         card.borderColor = NSColor.separatorColor.withAlphaComponent(0.25)
         card.fillColor = NSColor.controlBackgroundColor.withAlphaComponent(0.5)
-        card.contentViewMargins = NSSize(width: 16, height: 14)
+        card.translatesAutoresizingMaskIntoConstraints = false
 
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 12
+        stack.translatesAutoresizingMaskIntoConstraints = false
         stack.addArrangedSubview(sectionLabel(title))
         for (index, row) in rows.enumerated() {
             if index > 0 {
@@ -19672,13 +19681,15 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             }
             stack.addArrangedSubview(row)
         }
-        card.contentView = stack
-        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        card.addSubview(stack)
+        let hInset: CGFloat = 16
+        let vInset: CGFloat = 14
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: card.contentView!.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: card.contentView!.trailingAnchor),
-            stack.topAnchor.constraint(equalTo: card.contentView!.topAnchor),
-            stack.bottomAnchor.constraint(equalTo: card.contentView!.bottomAnchor),
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: hInset),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -hInset),
+            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: vInset),
+            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -vInset),
         ])
         for row in rows {
             row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
