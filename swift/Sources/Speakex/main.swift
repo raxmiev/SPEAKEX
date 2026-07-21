@@ -508,6 +508,9 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Save": ["ru": "Сохранить", "uz": "Saqlash"],
     "Couldn't Save API Key": ["ru": "Не удалось сохранить API-ключ", "uz": "API kalitni saqlab bo‘lmadi"],
     "OpenAI API key required": ["ru": "Нужен API-ключ OpenAI", "uz": "OpenAI API kaliti kerak"],
+    "OpenAI API Key: Configured": ["ru": "API-ключ OpenAI: настроен", "uz": "OpenAI API kaliti: sozlangan"],
+    "Enter OpenAI API Key…": ["ru": "Ввести API-ключ OpenAI…", "uz": "OpenAI API kalitini kiritish…"],
+    "An OpenAI API key is required for AI features.": ["ru": "Для функций ИИ нужен API-ключ OpenAI.", "uz": "AI funksiyalari uchun OpenAI API kaliti kerak."],
     "Text correction (AI)": ["ru": "Корректировка текста (ИИ)", "uz": "Matnni AI tuzatishi"],
     "Fixes recognition errors and grammar via the OpenAI API. Only the text is sent to the cloud.": ["ru": "Исправляет ошибки распознавания и грамматику через OpenAI API. В облако отправляется только текст.", "uz": "OpenAI API orqali xatolar va grammatika tuzatiladi. Bulutga faqat matn yuboriladi."],
     "Recognition": ["ru": "Распознавание", "uz": "Tanib olish"],
@@ -529,6 +532,26 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "OpenAI Cloud (needs API key)": ["ru": "OpenAI Облако (нужен API-ключ)", "uz": "OpenAI Bulut (API kalit kerak)"],
     "An OpenAI API key is required for the cloud speech model.": ["ru": "Для облачной модели распознавания нужен API-ключ OpenAI.", "uz": "Bulutli nutq modeli uchun OpenAI API kaliti kerak."],
     "The local model stays available offline; the cloud model is more accurate.": ["ru": "Локальная модель работает офлайн; облачная — точнее.", "uz": "Lokal model oflayn ishlaydi; bulutli model aniqroq."],
+    "Russian / English": ["ru": "Русский / English", "uz": "Ruscha / Inglizcha"],
+    "Statistics": ["ru": "Статистика", "uz": "Statistika"],
+    "History": ["ru": "История", "uz": "Tarix"],
+    "DICTATIONS": ["ru": "ДИКТОВКИ", "uz": "DIKTOVKALAR"],
+    "CHARACTERS": ["ru": "СИМВОЛЫ", "uz": "BELGILAR"],
+    "SPEECH TIME": ["ru": "ВРЕМЯ РЕЧИ", "uz": "NUTQ VAQTI"],
+    "last 7 days": ["ru": "за 7 дней", "uz": "7 kunda"],
+    "in finished text": ["ru": "в готовом тексте", "uz": "tayyor matnda"],
+    "total": ["ru": "суммарно", "uz": "jami"],
+    "Today is not counted until it's complete.": ["ru": "Сегодняшний день учитывается только после его завершения.", "uz": "Bugungi kun faqat tugagach hisoblanadi."],
+    "No dictations yet.": ["ru": "Пока нет диктовок.", "uz": "Hali diktovka yo‘q."],
+    "Copy": ["ru": "Скопировать", "uz": "Nusxa olish"],
+    "(empty)": ["ru": "(пусто)", "uz": "(bo‘sh)"],
+    "Clear History": ["ru": "Очистить историю", "uz": "Tarixni tozalash"],
+    "Clear History?": ["ru": "Очистить историю?", "uz": "Tarix tozalansinmi?"],
+    "This removes all recent transcripts. This cannot be undone.": ["ru": "Все недавние расшифровки будут удалены. Это необратимо.", "uz": "Barcha so‘nggi matnlar o‘chiriladi. Buni qaytarib bo‘lmaydi."],
+    "Clear": ["ru": "Очистить", "uz": "Tozalash"],
+    "Stop SPEAKEX?": ["ru": "Остановить SPEAKEX?", "uz": "SPEAKEX to‘xtatilsinmi?"],
+    "%@ dictation will stop until you open SPEAKEX again. Use Close to hide windows while keeping dictation running.": ["ru": "Диктовка на «%@» перестанет работать, пока вы снова не откроете SPEAKEX. Кнопка «Закрыть» просто спрячет окна, диктовка продолжит работать.", "uz": "«%@» orqali diktovka SPEAKEXni qayta ochmaguningizcha ishlamaydi. «Yopish» oynalarni yashiradi, diktovka ishlayveradi."],
+    "Stop Dictation": ["ru": "Остановить диктовку", "uz": "Diktovkani to‘xtatish"],
     // Colors and HUD styles
     "Red": ["ru": "Красный", "uz": "Qizil"],
     "Orange": ["ru": "Оранжевый", "uz": "To‘q sariq"],
@@ -12047,10 +12070,11 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func confirmStopDictation() -> Bool {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "Stop SPEAKEX?"
-        alert.informativeText = "Right Command dictation will stop until you open SPEAKEX again. Use Close to hide windows while keeping dictation running."
-        alert.addButton(withTitle: "Keep Running")
-        alert.addButton(withTitle: "Stop Dictation")
+        alert.messageText = L("Stop SPEAKEX?")
+        alert.informativeText = String(format: L("%@ dictation will stop until you open SPEAKEX again. Use Close to hide windows while keeping dictation running."),
+                                       L(hotkey.hotkey.name))
+        alert.addButton(withTitle: L("Keep Running"))
+        alert.addButton(withTitle: L("Stop Dictation"))
         return alert.runModal() == .alertSecondButtonReturn
     }
 
@@ -12254,6 +12278,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         // Settings submenu.
         menu.addItem(buildSettingsItem())
+        menu.addItem(buildAIFeaturesMenuItem())
         menu.addItem(buildSupportItem())
         menu.addItem(.separator())
 
@@ -12526,6 +12551,9 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 "Trigger mode: \(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue)",
                 "Speech model: \(speechModelProfile.displayName)",
                 "Language: \(languageSettingText)",
+                "OpenAI API key configured: \(OpenAIKeyStore.isConfigured)",
+                "Text correction (AI): \(settings.textPolishEnabled)",
+                "Translator: \(settings.translatorDirection.rawValue)",
                 "Paste behavior: \(PASTE_SUFFIX_DISPLAY[settings.pasteSuffix] ?? settings.pasteSuffix.rawValue)",
                 "Remove filler words: \(settings.removeFillerWords)",
                 "Recent transcripts: \(RECENT_TRANSCRIPT_LIMIT_DISPLAY[settings.recentTranscriptLimit] ?? settings.recentTranscriptLimit.rawValue) (\(visibleHistory.count) visible, \(history.count) archived)",
@@ -13103,6 +13131,20 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
               profile != settings.speechModelProfile,
               startupTask == nil, !isRecording, !isBusy,
               !isResettingSpeechModelCache, !isSwitchingSpeechModel else { return }
+        // Mirror the panel's guard: the local model cannot recognize
+        // Uzbek at all, so switching to it while Uzbek is selected
+        // would silently produce garbage transcripts instead of an
+        // error — block it with an explanation instead.
+        if profile != .openaiCloud, settings.processingLanguage == .uzbek {
+            showAppForModal()
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = L("Uzbek needs the cloud model")
+            alert.informativeText = L("The local model cannot recognize Uzbek. Change the language first, or keep the cloud model.")
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+            return
+        }
         let previous = settings.speechModelProfile
         settings.speechModelProfile = profile
         // Mirror the startup-failure fallback flow so a broken switch
@@ -13119,6 +13161,97 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             isSwitchingSpeechModel = false
             startStartup(reason: "speech model switch")
         }
+    }
+
+    private func buildAIFeaturesMenuItem() -> NSMenuItem {
+        let parent = NSMenuItem(title: L("AI features"), action: nil, keyEquivalent: "")
+        let sub = NSMenu()
+        sub.autoenablesItems = false
+        let unlocked = OpenAIKeyStore.isConfigured
+
+        let keyItem = NSMenuItem(title: unlocked ? L("OpenAI API Key: Configured") : L("Enter OpenAI API Key…"),
+                                 action: #selector(enterAPIKeyMenuClicked(_:)),
+                                 keyEquivalent: "")
+        keyItem.target = self
+        keyItem.state = unlocked ? .on : .off
+        if !unlocked {
+            keyItem.toolTip = L("To unlock AI features, enter your OpenAI API key. Get one at platform.openai.com: sign up, add a card under Billing, then create a key in the API keys section.")
+        }
+        sub.addItem(keyItem)
+        sub.addItem(.separator())
+
+        let polish = NSMenuItem(title: L("Text correction (AI)"),
+                                action: #selector(toggleTextPolishMenuClicked(_:)),
+                                keyEquivalent: "")
+        polish.target = self
+        polish.state = (unlocked && settings.textPolishEnabled) ? .on : .off
+        polish.isEnabled = unlocked
+        if !unlocked {
+            polish.toolTip = L("An OpenAI API key is required for AI features.")
+        }
+        sub.addItem(polish)
+
+        let translatorParent = NSMenuItem(title: L("Translator"), action: nil, keyEquivalent: "")
+        let translatorSub = NSMenu()
+        translatorSub.autoenablesItems = false
+        for direction in TranslatorDirection.allCases {
+            let item = NSMenuItem(title: direction.displayName,
+                                  action: #selector(selectTranslatorMenuClicked(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            item.state = (direction == settings.translatorDirection) ? .on : .off
+            item.representedObject = direction.rawValue
+            item.isEnabled = unlocked || direction == .off
+            translatorSub.addItem(item)
+        }
+        translatorParent.submenu = translatorSub
+        translatorParent.isEnabled = unlocked || settings.translatorDirection != .off
+        sub.addItem(translatorParent)
+
+        parent.submenu = sub
+        return parent
+    }
+
+    @objc private func enterAPIKeyMenuClicked(_ sender: NSMenuItem) {
+        showAppForModal()
+        let alert = NSAlert()
+        alert.messageText = L("Enter your OpenAI API key")
+        alert.informativeText = L("The key is stored only on this Mac in a file readable only by you. Leave empty to remove the saved key.")
+        alert.addButton(withTitle: L("Save"))
+        alert.addButton(withTitle: L("Cancel"))
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
+        field.placeholderString = "sk-…"
+        if let existing = OpenAIKeyStore.read() {
+            field.stringValue = existing
+        }
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            try OpenAIKeyStore.write(field.stringValue)
+            rebuildMenu()
+        } catch {
+            let errorAlert = NSAlert()
+            errorAlert.alertStyle = .warning
+            errorAlert.messageText = L("Couldn't Save API Key")
+            errorAlert.informativeText = error.localizedDescription
+            errorAlert.addButton(withTitle: "OK")
+            errorAlert.runModal()
+        }
+    }
+
+    @objc private func toggleTextPolishMenuClicked(_ sender: NSMenuItem) {
+        guard OpenAIKeyStore.isConfigured else { return }
+        settings.textPolishEnabled.toggle()
+        rebuildMenu()
+    }
+
+    @objc private func selectTranslatorMenuClicked(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let direction = TranslatorDirection(rawValue: raw) else { return }
+        guard direction == .off || OpenAIKeyStore.isConfigured else { return }
+        settings.translatorDirection = direction
+        rebuildMenu()
     }
 
     private func buildInterfaceLanguageItem() -> NSMenuItem {
@@ -14702,6 +14835,15 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc private func showAboutClicked(_ sender: NSMenuItem) {
         showAppForModal()
+        let usesCloud = settings.speechModelProfile == .openaiCloud
+            || settings.textPolishEnabled
+            || settings.translatorDirection != .off
+        let privacyLine = usesCloud
+            ? "Cloud features are active: audio and/or text are sent to OpenAI's API. No telemetry to Speakex/Anthropic."
+            : "Local-only dictation. No cloud transcription, no telemetry."
+        let networkLine = usesCloud
+            ? "Network: model download, optional update check and install, OpenAI API calls for the enabled cloud features."
+            : "Network: model download, optional update check and install."
         let alert = NSAlert()
         alert.messageText = "SPEAKEX \(currentBundleVersion())"
         alert.informativeText = """
@@ -14711,11 +14853,11 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             Mode:    \(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue)
             Model:   \(settings.speechModelProfile.aboutModelText)
 
-            Local-only dictation. No cloud transcription, no telemetry.
-            Network: model download, optional update check and install.
+            \(privacyLine)
+            \(networkLine)
             Permissions: microphone audio, paste-at-cursor, push-to-talk hotkey.
 
-            Open source, based on Speakex by Richard Courtman.
+            Open source, based on Parakey by Richard Courtman.
             github.com/raxmiev/SPEAKEX · MIT licensed
             """
         // Use our app icon instead of NSAlert's default exclamation
@@ -19064,7 +19206,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
 
     private func showWindow() {
         if let window {
-            refresh()
+            refresh(force: true)
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
@@ -19079,7 +19221,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         window.isReleasedWhenClosed = false
         window.delegate = self
         self.window = window
-        refresh()
+        refresh(force: true)
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -19096,12 +19238,61 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     }
 
     @objc private func refreshTimerFired(_ timer: Timer) {
+        // Dirty-checked: only rebuilds when something actually changed,
+        // so a periodic tick never interrupts scrolling or an open
+        // popup menu. Explicit user actions elsewhere call
+        // refresh(force: true) instead.
         refresh()
     }
 
-    private func refresh() {
-        // The panel rebuilds every second; keep the scroll position so
-        // the refresh is invisible to the user.
+    private var lastPanelSignature: String?
+
+    /// Cheap fingerprint of everything the panel renders. The timer
+    /// calls `refresh()` once a second to catch service/permission
+    /// changes, but rebuilding the whole view tree on every tick was
+    /// interrupting scrolling and closing open popup menus. Skipping
+    /// the rebuild when nothing actually changed makes scrolling and
+    /// menu interaction behave normally while still catching real
+    /// updates (a permission granted, the service starting, etc.)
+    /// within a second.
+    private func panelSignature() -> String {
+        let state = AgentRuntimeStateStore.read()
+        var parts: [String] = [
+            SPEAKEXAgentService.isAgentRunning() ? "running" : "stopped",
+            settings.agentEnabled ? "enabled" : "disabled",
+            state?.status ?? "-", state?.detail ?? "-",
+            permissionClickCount.description,
+        ]
+        parts += Permission.allCases.map { Permissions.isGranted($0) ? "1" : "0" }
+        parts += [
+            settings.speechModelProfile.rawValue,
+            settings.processingLanguage.rawValue,
+            settings.translatorDirection.rawValue,
+            settings.textPolishEnabled ? "1" : "0",
+            OpenAIKeyStore.isConfigured ? "1" : "0",
+            String(settings.hotkeyKeycode),
+            settings.triggerMode.rawValue,
+            settings.optionCommandEnterAfterDictation ? "1" : "0",
+            settings.playFeedbackSounds ? "1" : "0",
+            settings.showMenuBarIcon ? "1" : "0",
+            settings.recordingHUDRecordingColor.rawValue,
+            settings.recordingHUDTranscribingColor.rawValue,
+            settings.recordingHUDBackgroundStyle.rawValue,
+            settings.uiLanguage.rawValue,
+            String(settings.dailyDictationUsage.count),
+            String(settings.recentTranscriptEntries.count),
+            settings.recentTranscriptEntries.last?.text ?? "-",
+        ]
+        return parts.joined(separator: "|")
+    }
+
+    private func refresh(force: Bool = false) {
+        let signature = panelSignature()
+        guard force || signature != lastPanelSignature || window?.contentView == nil else { return }
+        lastPanelSignature = signature
+
+        // Keep the scroll position across the rebuild so a real change
+        // (permission granted, status update) doesn't jump the view.
         let previousOffset = (window?.contentView as? NSScrollView)?.contentView.bounds.origin
         window?.contentView = makeContentView()
         if let previousOffset,
@@ -19125,41 +19316,36 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                                   color: .secondaryLabelColor)
         root.addArrangedSubview(title)
         root.addArrangedSubview(subtitle)
-        root.addArrangedSubview(separator())
 
-        root.addArrangedSubview(sectionLabel(L("Service")))
-        root.addArrangedSubview(serviceStatusView())
-        root.addArrangedSubview(serviceButtonsView())
+        root.addArrangedSubview(sectionCard(title: L("Service"), rows: [
+            serviceStatusView(),
+            serviceButtonsView(),
+        ]))
 
-        root.addArrangedSubview(separator())
-        root.addArrangedSubview(sectionLabel(L("Permissions")))
-        for permission in Permission.allCases {
-            root.addArrangedSubview(permissionRow(permission))
-        }
+        root.addArrangedSubview(sectionCard(title: L("Permissions"),
+                                            rows: Permission.allCases.map { permissionRow($0) }))
 
-        root.addArrangedSubview(separator())
-        root.addArrangedSubview(sectionLabel(L("Recognition")))
-        root.addArrangedSubview(popupRow(title: L("Speech model"),
-                                         detail: L("The local model stays available offline; the cloud model is more accurate."),
-                                         selectedValue: settings.speechModelProfile.rawValue,
-                                         options: [
-                                             (L("Parakeet v3 (local, free)"), SpeechModelProfile.multilingualV3.rawValue),
-                                             (L("OpenAI Cloud (needs API key)"), SpeechModelProfile.openaiCloud.rawValue),
-                                         ],
-                                         action: #selector(selectSpeechModelClicked(_:))))
-        root.addArrangedSubview(popupRow(title: L("Language"),
-                                         detail: L("Uzbek is available only with the cloud speech model."),
-                                         selectedValue: settings.processingLanguage.rawValue,
-                                         options: [
-                                             (L("Auto"), ProcessingLanguage.auto.rawValue),
-                                             (L("Russian"), ProcessingLanguage.russian.rawValue),
-                                             (L("English"), ProcessingLanguage.english.rawValue),
-                                             (L("Uzbek (cloud model)"), ProcessingLanguage.uzbek.rawValue),
-                                         ],
-                                         action: #selector(selectLanguageClicked(_:))))
+        root.addArrangedSubview(sectionCard(title: L("Recognition"), rows: [
+            popupRow(title: L("Speech model"),
+                     detail: L("The local model stays available offline; the cloud model is more accurate."),
+                     selectedValue: settings.speechModelProfile.rawValue,
+                     options: [
+                         (L("Parakeet v3 (local, free)"), SpeechModelProfile.multilingualV3.rawValue),
+                         (L("OpenAI Cloud (needs API key)"), SpeechModelProfile.openaiCloud.rawValue),
+                     ],
+                     action: #selector(selectSpeechModelClicked(_:))),
+            popupRow(title: L("Language"),
+                     detail: L("Uzbek is available only with the cloud speech model."),
+                     selectedValue: settings.processingLanguage.rawValue,
+                     options: [
+                         (L("Russian / English"), ProcessingLanguage.auto.rawValue),
+                         (L("Russian"), ProcessingLanguage.russian.rawValue),
+                         (L("English"), ProcessingLanguage.english.rawValue),
+                         (L("Uzbek (cloud model)"), ProcessingLanguage.uzbek.rawValue),
+                     ],
+                     action: #selector(selectLanguageClicked(_:))),
+        ]))
 
-        root.addArrangedSubview(separator())
-        root.addArrangedSubview(sectionLabel(L("Settings")))
         var hotkeyOptions: [(title: String, value: String)] = [
             (L("Right Option"), "61"),
             (L("Right Command"), "54"),
@@ -19170,66 +19356,71 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             hotkeyOptions.insert((hotkeyChoice(forKeycode: settings.hotkeyKeycode).name,
                                   currentHotkeyValue), at: 0)
         }
-        root.addArrangedSubview(popupRow(title: L("Dictation key"),
-                                         detail: L(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue.lowercased()),
-                                         selectedValue: currentHotkeyValue,
-                                         options: hotkeyOptions,
-                                         action: #selector(selectHotkeyClicked(_:))))
-        root.addArrangedSubview(checkboxRow(title: L("Option + Command sends Enter"),
-                                            detail: L("On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter."),
-                                            isOn: settings.optionCommandEnterAfterDictation,
-                                            action: #selector(toggleOptionCommandEnterClicked(_:))))
-        root.addArrangedSubview(checkboxRow(title: L("Play feedback sounds"),
-                                            detail: L("Chimes when dictation starts and stops."),
-                                            isOn: settings.playFeedbackSounds,
-                                            action: #selector(toggleFeedbackSoundsClicked(_:))))
-        root.addArrangedSubview(checkboxRow(title: L("Show icon in the menu bar"),
-                                            detail: L("Quick access to settings and history next to the clock."),
-                                            isOn: settings.showMenuBarIcon,
-                                            action: #selector(toggleMenuBarIconClicked(_:))))
-        root.addArrangedSubview(popupRow(title: L("Recording color"),
-                                         detail: L("Color used while the microphone is listening."),
-                                         selectedValue: settings.recordingHUDRecordingColor.rawValue,
-                                         options: RecordingHUDAccentColor.allCases.map { (L($0.displayName), $0.rawValue) },
-                                         action: #selector(selectRecordingHUDRecordingColor(_:))))
-        root.addArrangedSubview(popupRow(title: L("Transcribing color"),
-                                         detail: L("Color used while speech is being converted to text."),
-                                         selectedValue: settings.recordingHUDTranscribingColor.rawValue,
-                                         options: RecordingHUDAccentColor.allCases.map { (L($0.displayName), $0.rawValue) },
-                                         action: #selector(selectRecordingHUDTranscribingColor(_:))))
-        root.addArrangedSubview(popupRow(title: L("HUD background"),
-                                         detail: L("Capsule background follows the system appearance or stays fixed."),
-                                         selectedValue: settings.recordingHUDBackgroundStyle.rawValue,
-                                         options: RecordingHUDBackgroundStyle.allCases.map { (L($0.displayName), $0.rawValue) },
-                                         action: #selector(selectRecordingHUDBackgroundStyle(_:))))
-        root.addArrangedSubview(popupRow(title: L("Interface language"),
-                                         detail: L("Language of the SPEAKEX menus and panel."),
-                                         selectedValue: settings.uiLanguage.rawValue,
-                                         options: UILanguage.allCases.map { ($0.displayName, $0.rawValue) },
-                                         action: #selector(selectUILanguageClicked(_:))))
+        root.addArrangedSubview(sectionCard(title: L("Settings"), rows: [
+            popupRow(title: L("Dictation key"),
+                     detail: L(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue.lowercased()),
+                     selectedValue: currentHotkeyValue,
+                     options: hotkeyOptions,
+                     action: #selector(selectHotkeyClicked(_:))),
+            checkboxRow(title: L("Option + Command sends Enter"),
+                        detail: L("On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter."),
+                        isOn: settings.optionCommandEnterAfterDictation,
+                        action: #selector(toggleOptionCommandEnterClicked(_:))),
+            checkboxRow(title: L("Play feedback sounds"),
+                        detail: L("Chimes when dictation starts and stops."),
+                        isOn: settings.playFeedbackSounds,
+                        action: #selector(toggleFeedbackSoundsClicked(_:))),
+            checkboxRow(title: L("Show icon in the menu bar"),
+                        detail: L("Quick access to settings and history next to the clock."),
+                        isOn: settings.showMenuBarIcon,
+                        action: #selector(toggleMenuBarIconClicked(_:))),
+            popupRow(title: L("Recording color"),
+                     detail: L("Color used while the microphone is listening."),
+                     selectedValue: settings.recordingHUDRecordingColor.rawValue,
+                     options: RecordingHUDAccentColor.allCases.map { (L($0.displayName), $0.rawValue) },
+                     action: #selector(selectRecordingHUDRecordingColor(_:))),
+            popupRow(title: L("Transcribing color"),
+                     detail: L("Color used while speech is being converted to text."),
+                     selectedValue: settings.recordingHUDTranscribingColor.rawValue,
+                     options: RecordingHUDAccentColor.allCases.map { (L($0.displayName), $0.rawValue) },
+                     action: #selector(selectRecordingHUDTranscribingColor(_:))),
+            popupRow(title: L("HUD background"),
+                     detail: L("Capsule background follows the system appearance or stays fixed."),
+                     selectedValue: settings.recordingHUDBackgroundStyle.rawValue,
+                     options: RecordingHUDBackgroundStyle.allCases.map { (L($0.displayName), $0.rawValue) },
+                     action: #selector(selectRecordingHUDBackgroundStyle(_:))),
+            popupRow(title: L("Interface language"),
+                     detail: L("Language of the SPEAKEX menus and panel."),
+                     selectedValue: settings.uiLanguage.rawValue,
+                     options: UILanguage.allCases.map { ($0.displayName, $0.rawValue) },
+                     action: #selector(selectUILanguageClicked(_:))),
+        ]))
 
-        root.addArrangedSubview(separator())
-        root.addArrangedSubview(sectionLabel(L("AI features")))
         let aiUnlocked = OpenAIKeyStore.isConfigured
-        root.addArrangedSubview(statusRow(title: L("OpenAI API key"),
-                                          detail: aiUnlocked
-                                              ? L("Configured. Text correction and the translator are unlocked.")
-                                              : L("To unlock AI features, enter your OpenAI API key. Get one at platform.openai.com: sign up, add a card under Billing, then create a key in the API keys section."),
-                                          status: aiUnlocked ? L("Configured") : L("Not configured"),
-                                          statusColor: aiUnlocked ? .systemGreen : .systemOrange,
-                                          buttonTitle: L("Enter Key…"),
-                                          action: #selector(enterAPIKeyClicked(_:))))
-        root.addArrangedSubview(checkboxRow(title: L("Text correction (AI)"),
-                                            detail: L("Fixes recognition errors and grammar via the OpenAI API. Only the text is sent to the cloud."),
-                                            isOn: aiUnlocked && settings.textPolishEnabled,
-                                            action: #selector(toggleTextPolishClicked(_:)),
-                                            enabled: aiUnlocked))
-        root.addArrangedSubview(popupRow(title: L("Translator"),
-                                         detail: L("Dictate in the source language — the translation is inserted."),
-                                         selectedValue: settings.translatorDirection.rawValue,
-                                         options: TranslatorDirection.allCases.map { ($0.displayName, $0.rawValue) },
-                                         action: #selector(selectTranslatorClicked(_:)),
-                                         enabled: aiUnlocked))
+        root.addArrangedSubview(sectionCard(title: L("AI features"), rows: [
+            statusRow(title: L("OpenAI API key"),
+                      detail: aiUnlocked
+                          ? L("Configured. Text correction and the translator are unlocked.")
+                          : L("To unlock AI features, enter your OpenAI API key. Get one at platform.openai.com: sign up, add a card under Billing, then create a key in the API keys section."),
+                      status: aiUnlocked ? L("Configured") : L("Not configured"),
+                      statusColor: aiUnlocked ? .systemGreen : .systemOrange,
+                      buttonTitle: L("Enter Key…"),
+                      action: #selector(enterAPIKeyClicked(_:))),
+            checkboxRow(title: L("Text correction (AI)"),
+                        detail: L("Fixes recognition errors and grammar via the OpenAI API. Only the text is sent to the cloud."),
+                        isOn: aiUnlocked && settings.textPolishEnabled,
+                        action: #selector(toggleTextPolishClicked(_:)),
+                        enabled: aiUnlocked),
+            popupRow(title: L("Translator"),
+                     detail: L("Dictate in the source language — the translation is inserted."),
+                     selectedValue: settings.translatorDirection.rawValue,
+                     options: TranslatorDirection.allCases.map { ($0.displayName, $0.rawValue) },
+                     action: #selector(selectTranslatorClicked(_:)),
+                     enabled: aiUnlocked),
+        ]))
+
+        root.addArrangedSubview(sectionCard(title: L("Statistics"), rows: statisticsRows()))
+        root.addArrangedSubview(sectionCard(title: L("History"), rows: historyRows()))
 
         let container = PanelScrollContentView()
         container.addSubview(root)
@@ -19456,6 +19647,128 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         return box
     }
 
+    /// Groups a section's rows into one visually distinct card — a
+    /// background panel with a heading, replacing the old flat
+    /// heading + hairline-separator layout so sections read as blocks
+    /// at a glance.
+    private func sectionCard(title: String, rows: [NSView]) -> NSView {
+        let card = NSBox()
+        card.boxType = .custom
+        card.titlePosition = .noTitle
+        card.cornerRadius = 12
+        card.borderWidth = 1
+        card.borderColor = NSColor.separatorColor.withAlphaComponent(0.25)
+        card.fillColor = NSColor.controlBackgroundColor.withAlphaComponent(0.5)
+        card.contentViewMargins = NSSize(width: 16, height: 14)
+
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 12
+        stack.addArrangedSubview(sectionLabel(title))
+        for (index, row) in rows.enumerated() {
+            if index > 0 {
+                stack.addArrangedSubview(separator())
+            }
+            stack.addArrangedSubview(row)
+        }
+        card.contentView = stack
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: card.contentView!.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: card.contentView!.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: card.contentView!.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: card.contentView!.bottomAnchor),
+        ])
+        for row in rows {
+            row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        }
+        return card
+    }
+
+    private func statisticsRows() -> [NSView] {
+        let snapshot = lastSevenCompletedDictationUsage(settings.dailyDictationUsage,
+                                                         referenceDate: Date(),
+                                                         calendar: .current)
+        let cards = NSStackView()
+        cards.orientation = .horizontal
+        cards.alignment = .top
+        cards.distribution = .fillEqually
+        cards.spacing = 12
+        cards.addArrangedSubview(UsageMetricCard(symbolName: "waveform",
+                                                  tint: .systemOrange,
+                                                  title: L("DICTATIONS"),
+                                                  value: formattedUsageInteger(snapshot.totalDictations),
+                                                  detail: L("last 7 days")))
+        cards.addArrangedSubview(UsageMetricCard(symbolName: "textformat",
+                                                  tint: .systemPink,
+                                                  title: L("CHARACTERS"),
+                                                  value: formattedUsageInteger(snapshot.totalCharacters),
+                                                  detail: L("in finished text")))
+        cards.addArrangedSubview(UsageMetricCard(symbolName: "mic.fill",
+                                                  tint: .systemBlue,
+                                                  title: L("SPEECH TIME"),
+                                                  value: panelFormattedDuration(snapshot.totalAudioSeconds),
+                                                  detail: L("total")))
+        return [cards, panelLabel(L("Today is not counted until it's complete."),
+                                  size: 11.5,
+                                  color: .tertiaryLabelColor)]
+    }
+
+    private func panelFormattedDuration(_ seconds: Double) -> String {
+        let total = max(0, Int(seconds.rounded()))
+        if total >= 3_600 {
+            return String(format: "%dh %02dm", total / 3_600, (total % 3_600) / 60)
+        }
+        if total >= 60 {
+            return String(format: "%dm %02ds", total / 60, total % 60)
+        }
+        return "\(total)s"
+    }
+
+    private func historyRows() -> [NSView] {
+        let entries = settings.recentTranscriptEntries
+        if entries.isEmpty {
+            return [panelLabel(L("No dictations yet."), size: 13, color: .secondaryLabelColor)]
+        }
+        var rows: [NSView] = entries.prefix(5).map { entry in
+            let flat = entry.text.replacingOccurrences(of: "\n", with: " ")
+            let preview = flat.count > 90 ? String(flat.prefix(90)) + "…" : flat
+            let row = statusRow(title: preview.isEmpty ? L("(empty)") : preview,
+                                detail: "",
+                                status: "",
+                                statusColor: .secondaryLabelColor,
+                                buttonTitle: L("Copy"),
+                                action: #selector(copyHistoryEntryClicked(_:)))
+            if let button = (row as? NSStackView)?.arrangedSubviews.last as? NSButton {
+                button.identifier = NSUserInterfaceItemIdentifier(entry.text)
+            }
+            return row
+        }
+        let clear = panelButton(L("Clear History"), action: #selector(clearHistoryPanelClicked(_:)))
+        rows.append(clear)
+        return rows
+    }
+
+    @objc private func copyHistoryEntryClicked(_ sender: NSButton) {
+        guard let text = sender.identifier?.rawValue else { return }
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(text, forType: .string)
+    }
+
+    @objc private func clearHistoryPanelClicked(_ sender: NSButton) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = L("Clear History?")
+        alert.informativeText = L("This removes all recent transcripts. This cannot be undone.")
+        alert.addButton(withTitle: L("Clear"))
+        alert.addButton(withTitle: L("Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        settings.recentTranscriptEntries = []
+        refresh(force: true)
+    }
+
     private func displayStatus(_ raw: String) -> String {
         switch raw {
         case "ready": return L("Running")
@@ -19497,7 +19810,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         } catch {
             showError(title: L("Couldn't Start Dictation Service"), detail: error.localizedDescription)
         }
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func restartAgentClicked(_ sender: NSButton) {
@@ -19507,7 +19820,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         } catch {
             showError(title: L("Couldn't Restart Dictation Service"), detail: error.localizedDescription)
         }
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func stopAgentClicked(_ sender: NSButton) {
@@ -19520,7 +19833,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         guard alert.runModal() == .alertSecondButtonReturn else { return }
         settings.agentEnabled = false
         SPEAKEXAgentService.stop()
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func closePanelClicked(_ sender: NSButton) {
@@ -19529,12 +19842,12 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
 
     @objc private func toggleOptionCommandEnterClicked(_ sender: NSButton) {
         settings.optionCommandEnterAfterDictation = sender.state == .on
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func toggleFeedbackSoundsClicked(_ sender: NSButton) {
         settings.playFeedbackSounds = sender.state == .on
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func selectHotkeyClicked(_ sender: NSPopUpButton) {
@@ -19547,7 +19860,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         if SPEAKEXAgentService.isAgentRunning() {
             try? SPEAKEXAgentService.restart()
         }
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func toggleMenuBarIconClicked(_ sender: NSButton) {
@@ -19557,28 +19870,28 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         if SPEAKEXAgentService.isAgentRunning() {
             try? SPEAKEXAgentService.restart()
         }
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func selectRecordingHUDRecordingColor(_ sender: NSPopUpButton) {
         guard let raw = sender.selectedItem?.representedObject as? String,
               let color = RecordingHUDAccentColor(rawValue: raw) else { return }
         settings.recordingHUDRecordingColor = color
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func selectRecordingHUDTranscribingColor(_ sender: NSPopUpButton) {
         guard let raw = sender.selectedItem?.representedObject as? String,
               let color = RecordingHUDAccentColor(rawValue: raw) else { return }
         settings.recordingHUDTranscribingColor = color
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func selectRecordingHUDBackgroundStyle(_ sender: NSPopUpButton) {
         guard let raw = sender.selectedItem?.representedObject as? String,
               let style = RecordingHUDBackgroundStyle(rawValue: raw) else { return }
         settings.recordingHUDBackgroundStyle = style
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func selectUILanguageClicked(_ sender: NSPopUpButton) {
@@ -19590,7 +19903,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         if SPEAKEXAgentService.isAgentRunning() {
             try? SPEAKEXAgentService.restart()
         }
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func enterAPIKeyClicked(_ sender: NSButton) {
@@ -19609,19 +19922,19 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         } catch {
             showError(title: L("Couldn't Save API Key"), detail: error.localizedDescription)
         }
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func toggleTextPolishClicked(_ sender: NSButton) {
         if sender.state == .on, !OpenAIKeyStore.isConfigured {
             enterAPIKeyClicked(sender)
             if !OpenAIKeyStore.isConfigured {
-                refresh()
+                refresh(force: true)
                 return
             }
         }
         settings.textPolishEnabled = sender.state == .on
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func selectLanguageClicked(_ sender: NSPopUpButton) {
@@ -19632,7 +19945,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             if !OpenAIKeyStore.isConfigured {
                 showError(title: L("OpenAI API key required"),
                           detail: L("Uzbek needs the cloud speech model and an OpenAI API key. Enter the key first."))
-                refresh()
+                refresh(force: true)
                 return
             }
             settings.processingLanguage = .uzbek
@@ -19642,7 +19955,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                     try? SPEAKEXAgentService.restart()
                 }
             }
-            refresh()
+            refresh(force: true)
             return
         }
 
@@ -19653,7 +19966,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         case .english: settings.dictationLanguage = .english
         default: settings.dictationLanguage = .auto
         }
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func selectTranslatorClicked(_ sender: NSPopUpButton) {
@@ -19662,11 +19975,11 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         if direction != .off, !OpenAIKeyStore.isConfigured {
             showError(title: L("OpenAI API key required"),
                       detail: L("To unlock AI features, enter your OpenAI API key. Get one at platform.openai.com: sign up, add a card under Billing, then create a key in the API keys section."))
-            refresh()
+            refresh(force: true)
             return
         }
         settings.translatorDirection = direction
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func selectSpeechModelClicked(_ sender: NSPopUpButton) {
@@ -19676,13 +19989,13 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         if profile == .openaiCloud, !OpenAIKeyStore.isConfigured {
             showError(title: L("OpenAI API key required"),
                       detail: L("An OpenAI API key is required for the cloud speech model."))
-            refresh()
+            refresh(force: true)
             return
         }
         if profile != .openaiCloud, settings.processingLanguage == .uzbek {
             showError(title: L("Uzbek needs the cloud model"),
                       detail: L("The local model cannot recognize Uzbek. Change the language first, or keep the cloud model."))
-            refresh()
+            refresh(force: true)
             return
         }
         guard profile != settings.speechModelProfile else { return }
@@ -19690,7 +20003,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         if SPEAKEXAgentService.isAgentRunning() {
             try? SPEAKEXAgentService.restart()
         }
-        refresh()
+        refresh(force: true)
     }
 
     @objc private func grantPermissionClicked(_ sender: NSButton) {
@@ -19698,7 +20011,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         let permission = Permission.allCases[sender.tag]
         if Permissions.isGranted(permission) {
             permissionClickCount[permission] = nil
-            refresh()
+            refresh(force: true)
             return
         }
 
@@ -19708,12 +20021,12 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             TCC.reset(permission, bundleID: Bundle.main.bundleIdentifier ?? SETTINGS_SUITE) { [weak self] in
                 guard let self else { return }
                 Permissions.request(permission)
-                self.refresh()
+                self.refresh(force: true)
             }
         } else {
             Permissions.request(permission)
         }
-        refresh()
+        refresh(force: true)
     }
 
     private func showError(title: String, detail: String) {
