@@ -544,6 +544,12 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Today is not counted until it's complete.": ["ru": "Сегодняшний день учитывается только после его завершения.", "uz": "Bugungi kun faqat tugagach hisoblanadi."],
     "No dictations yet.": ["ru": "Пока нет диктовок.", "uz": "Hali diktovka yo‘q."],
     "Copy": ["ru": "Скопировать", "uz": "Nusxa olish"],
+    "Edit": ["ru": "Правка", "uz": "Tahrirlash"],
+    "Undo": ["ru": "Отменить", "uz": "Bekor qilish"],
+    "Redo": ["ru": "Повторить", "uz": "Qaytarish"],
+    "Cut": ["ru": "Вырезать", "uz": "Kesish"],
+    "Paste": ["ru": "Вставить", "uz": "Qo‘yish"],
+    "Select All": ["ru": "Выделить всё", "uz": "Barchasini tanlash"],
     "(empty)": ["ru": "(пусто)", "uz": "(bo‘sh)"],
     "Clear History": ["ru": "Очистить историю", "uz": "Tarixni tozalash"],
     "Clear History?": ["ru": "Очистить историю?", "uz": "Tarix tozalansinmi?"],
@@ -9009,6 +9015,50 @@ private final class DictationSpeechTimeChartView: NSView {
     }
 }
 
+// MARK: - Standard Edit menu (enables Cmd+V/C/X/A in text fields)
+//
+// Neither the agent process nor the control panel window ever calls
+// `NSApp.mainMenu = ...` — this app has no nib/storyboard, so there is
+// no default Edit menu anywhere. Without one, AppKit's key-equivalent
+// dispatch for Cmd+V/C/X/A/Z never resolves to the standard
+// cut:/copy:/paste:/selectAll:/undo: actions, so pasting into any
+// NSTextField (e.g. the "Enter your OpenAI API key" field) silently
+// does nothing — typing still works because that's plain keyDown
+// handling, unrelated to the menu system. Installing even a minimal
+// mainMenu with these items (target left nil so the action routes up
+// the responder chain to whatever is first responder) fixes it. Safe
+// to call from an `.accessory`-policy process too: such apps never
+// display a menu bar regardless of `mainMenu` being set, but the key
+// equivalents still work.
+@MainActor
+func installStandardEditMenu() {
+    guard NSApp.mainMenu == nil else { return }
+
+    let mainMenu = NSMenu()
+
+    let appMenuItem = NSMenuItem()
+    mainMenu.addItem(appMenuItem)
+    let appMenu = NSMenu()
+    appMenuItem.submenu = appMenu
+    appMenu.addItem(withTitle: L("Quit SPEAKEX"),
+                    action: #selector(NSApplication.terminate(_:)),
+                    keyEquivalent: "q")
+
+    let editMenuItem = NSMenuItem()
+    mainMenu.addItem(editMenuItem)
+    let editMenu = NSMenu(title: L("Edit"))
+    editMenuItem.submenu = editMenu
+    editMenu.addItem(withTitle: L("Undo"), action: Selector(("undo:")), keyEquivalent: "z")
+    editMenu.addItem(withTitle: L("Redo"), action: Selector(("redo:")), keyEquivalent: "Z")
+    editMenu.addItem(.separator())
+    editMenu.addItem(withTitle: L("Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+    editMenu.addItem(withTitle: L("Copy"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+    editMenu.addItem(withTitle: L("Paste"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+    editMenu.addItem(withTitle: L("Select All"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+
+    NSApp.mainMenu = mainMenu
+}
+
 @MainActor
 final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private struct CachedInsertionTarget {
@@ -9248,6 +9298,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        installStandardEditMenu()
         if settings.normalizeSpeechModelProfileForCurrentBuild() {
             log("ASR: reset unsupported saved speech model selection to \(settings.speechModelProfile.shortName)")
         }
@@ -19174,6 +19225,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             return
         }
         SPEAKEXControlPanelRegistry.claimCurrentPanel()
+        installStandardEditMenu()
         if settings.agentEnabled && !SPEAKEXAgentService.isAgentRunning() {
             do {
                 try SPEAKEXAgentService.installAndStart()
