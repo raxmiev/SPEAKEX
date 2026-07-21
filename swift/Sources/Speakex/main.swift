@@ -358,6 +358,8 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "System": ["ru": "Системный", "uz": "Tizim"],
     "Control panel. Closing this window does not stop dictation.": ["ru": "Панель управления. Закрытие окна не останавливает диктовку.", "uz": "Boshqaruv paneli. Oynani yopish diktovkani to‘xtatmaydi."],
     "Service": ["ru": "Служба", "uz": "Xizmat"],
+    "Install ID": ["ru": "ID установки", "uz": "O‘rnatish ID"],
+    "Anonymous ID for this install. Send it to support to be granted Premium.": ["ru": "Анонимный ID этой установки. Отправьте его в поддержку, чтобы вам включили Премиум.", "uz": "Ushbu o‘rnatishning anonim ID’si. Premium olish uchun uni yordam xizmatiga yuboring."],
     "Permissions": ["ru": "Разрешения", "uz": "Ruxsatlar"],
     "Settings": ["ru": "Настройки", "uz": "Sozlamalar"],
     "Dictation service": ["ru": "Служба диктовки", "uz": "Diktovka xizmati"],
@@ -711,6 +713,31 @@ enum OpenAIKeyStore {
     }
 
     static var isConfigured: Bool { read() != nil }
+}
+
+/// A random, anonymous ID generated once per install and persisted
+/// locally — not tied to any personal info. Shown in the panel so a
+/// user can hand it to support to be granted premium manually, and
+/// (once the app talks to the proxy server) doubles as the
+/// `x-speakex-device-id` the server uses to bucket usage/quota.
+enum DeviceIdentity {
+    private static func idFileURL() throws -> URL {
+        try speakexApplicationSupportDirectory()
+            .appendingPathComponent("device_id", isDirectory: false)
+    }
+
+    static let current: String = {
+        if let url = try? idFileURL(),
+           let existing = try? String(contentsOf: url, encoding: .utf8) {
+            let trimmed = existing.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty { return trimmed }
+        }
+        let generated = UUID().uuidString
+        if let url = try? idFileURL() {
+            try? generated.write(to: url, atomically: true, encoding: .utf8)
+        }
+        return generated
+    }()
 }
 
 func cloudSpeechLanguageCode(processing: ProcessingLanguage,
@@ -19485,6 +19512,12 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         root.addArrangedSubview(sectionCard(title: L("Service"), icon: "power", rows: [
             serviceStatusView(),
             serviceButtonsView(),
+            statusRow(title: L("Install ID"),
+                      detail: L("Anonymous ID for this install. Send it to support to be granted Premium."),
+                      status: DeviceIdentity.current,
+                      statusColor: .secondaryLabelColor,
+                      buttonTitle: L("Copy"),
+                      action: #selector(copyDeviceIdClicked(_:))),
         ]))
 
         root.addArrangedSubview(sectionCard(title: L("Statistics"), icon: "chart.bar", rows: statisticsRows()))
@@ -19981,6 +20014,12 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         let pb = NSPasteboard.general
         pb.clearContents()
         pb.setString(text, forType: .string)
+    }
+
+    @objc private func copyDeviceIdClicked(_ sender: NSButton) {
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(DeviceIdentity.current, forType: .string)
     }
 
     @objc private func clearHistoryPanelClicked(_ sender: NSButton) {
