@@ -385,6 +385,7 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Option + Command sends Enter": ["ru": "Option + Command отправляет Enter", "uz": "Option + Command Enter yuboradi"],
     "On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter.": ["ru": "Вкл: текст просто вставляется, без Enter. Выкл: после вставки автоматически нажимается Enter.", "uz": "Yoqilgan: matn Enter bosilmasdan qo‘yiladi. O‘chirilgan: qo‘yilgandan keyin Enter bosiladi."],
     "Sends Enter": ["ru": "Отправляет Enter", "uz": "Enter yuboradi"],
+    "Auto-send": ["ru": "Автоотправка", "uz": "Avto-yuborish"],
     "When on, dictation presses Enter after inserting text. When off (default), it only inserts the text.": ["ru": "Если включено, после вставки текста автоматически нажимается Enter. Если выключено (по умолчанию), текст просто вставляется.", "uz": "Yoqilgan bo‘lsa, matn qo‘yilgandan keyin Enter avtomatik bosiladi. O‘chirilgan bo‘lsa (standart), matn shunchaki qo‘yiladi."],
     "Recording color": ["ru": "Цвет записи", "uz": "Yozish rangi"],
     "Color used while the microphone is listening.": ["ru": "Цвет, пока микрофон слушает.", "uz": "Mikrofon eshitayotganda ishlatiladigan rang."],
@@ -508,6 +509,11 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "OpenAI API key": ["ru": "API-ключ OpenAI", "uz": "OpenAI API kaliti"],
     "Stored only on this Mac. Needed for text correction and the cloud speech model.": ["ru": "Хранится только на этом Mac. Нужен для корректировки текста и облачной модели распознавания.", "uz": "Faqat shu Macda saqlanadi. Matn tuzatish va bulutli nutq modeli uchun kerak."],
     "Configured": ["ru": "Настроен", "uz": "Sozlangan"],
+    "Not set": ["ru": "Не задано", "uz": "Belgilanmagan"],
+    "Text correction instructions": ["ru": "Инструкции к корректировке текста", "uz": "Matn tuzatish ko‘rsatmalari"],
+    "Translator instructions": ["ru": "Инструкции переводчику", "uz": "Tarjimon uchun ko‘rsatmalar"],
+    "Extra style or terminology guidance for the corrector. Always added on top of the built-in rule: only fix errors, never rewrite.": ["ru": "Дополнительные указания по стилю или терминологии для корректора. Всегда добавляются поверх встроенного правила: только исправлять ошибки, не переписывать.", "uz": "Tuzatuvchi uchun uslub yoki atama bo‘yicha qo‘shimcha ko‘rsatmalar. Har doim asosiy qoida ustiga qo‘shiladi: faqat xatolarni tuzatish, qayta yozmaslik."],
+    "Extra tone or terminology guidance for the translator.": ["ru": "Дополнительные указания по тону или терминологии для переводчика.", "uz": "Tarjimon uchun ohang yoki atama bo‘yicha qo‘shimcha ko‘rsatmalar."],
     "Not configured": ["ru": "Не настроен", "uz": "Sozlanmagan"],
     "Enter Key…": ["ru": "Ввести ключ…", "uz": "Kalit kiritish…"],
     "Enter your OpenAI API key": ["ru": "Введите API-ключ OpenAI", "uz": "OpenAI API kalitini kiriting"],
@@ -522,10 +528,14 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Fixes recognition errors and grammar via the OpenAI API. Only the text is sent to the cloud.": ["ru": "Исправляет ошибки распознавания и грамматику через OpenAI API. В облако отправляется только текст.", "uz": "OpenAI API orqali xatolar va grammatika tuzatiladi. Bulutga faqat matn yuboriladi."],
     "Fixes recognition errors and grammar via the OpenAI API. Adds roughly 1–3s before text appears (network round trip). Only the text is sent to the cloud.": ["ru": "Исправляет ошибки распознавания и грамматику через OpenAI API. Добавляет примерно 1–3 с перед вставкой текста (запрос по сети). В облако отправляется только текст.", "uz": "OpenAI API orqali xatolar va grammatika tuzatiladi. Matn chiqishidan oldin taxminan 1–3 soniya qo‘shadi (tarmoq so‘rovi). Bulutga faqat matn yuboriladi."],
     "Recognition": ["ru": "Распознавание", "uz": "Tanib olish"],
+    "Open SPEAKEX Panel…": ["ru": "Открыть панель SPEAKEX…", "uz": "SPEAKEX panelini ochish…"],
     "Language": ["ru": "Язык", "uz": "Til"],
     "Auto": ["ru": "Авто", "uz": "Avto"],
     "Uzbek": ["ru": "Узбекский", "uz": "O‘zbekcha"],
     "Uzbek (cloud model)": ["ru": "Узбекский (облачная модель)", "uz": "O‘zbekcha (bulut modeli)"],
+    "Uzbek — Premium": ["ru": "Узбекский — Премиум", "uz": "O‘zbekcha — Premium"],
+    "Russian / English (auto)": ["ru": "Русский / English (авто)", "uz": "Ruscha / English (avto)"],
+    "Uzbek needs the cloud speech model — Premium.": ["ru": "Узбекскому нужна облачная модель распознавания — Премиум.", "uz": "O‘zbekcha uchun bulutli nutq modeli kerak — Premium."],
     "Uzbek is available only with the cloud speech model.": ["ru": "Узбекский доступен только с облачной моделью распознавания.", "uz": "O‘zbekcha faqat bulutli model bilan ishlaydi."],
     "Uzbek needs the cloud speech model and an OpenAI API key. Enter the key first.": ["ru": "Для узбекского нужна облачная модель и API-ключ OpenAI. Сначала введите ключ.", "uz": "O‘zbekcha uchun bulutli model va OpenAI API kaliti kerak. Avval kalitni kiriting."],
     "Uzbek needs the cloud model": ["ru": "Узбекскому нужна облачная модель", "uz": "O‘zbekcha bulut modelini talab qiladi"],
@@ -540,6 +550,7 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "OpenAI Cloud (needs API key)": ["ru": "OpenAI Облако (нужен API-ключ)", "uz": "OpenAI Bulut (API kalit kerak)"],
     "Parakeet v3 — Local · Free": ["ru": "Parakeet v3 — Локально · Бесплатно", "uz": "Parakeet v3 — Lokal · Bepul"],
     "OpenAI Cloud — Cloud · API key": ["ru": "OpenAI Cloud — Облако · Нужен API-ключ", "uz": "OpenAI Cloud — Bulut · API kalit kerak"],
+    "OpenAI Cloud — Cloud · Premium": ["ru": "OpenAI Cloud — Облако · Премиум", "uz": "OpenAI Cloud — Bulut · Premium"],
     "An OpenAI API key is required for the cloud speech model.": ["ru": "Для облачной модели распознавания нужен API-ключ OpenAI.", "uz": "Bulutli nutq modeli uchun OpenAI API kaliti kerak."],
     "The local model stays available offline; the cloud model is more accurate.": ["ru": "Локальная модель работает офлайн; облачная — точнее.", "uz": "Lokal model oflayn ishlaydi; bulutli model aniqroq."],
     "Transcription model": ["ru": "Модель транскрибации", "uz": "Transkripsiya modeli"],
@@ -637,10 +648,10 @@ enum ProcessingLanguage: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .auto: return L("Auto")
+        case .auto: return L("Russian / English (auto)")
         case .russian: return L("Russian")
         case .english: return L("English")
-        case .uzbek: return L("Uzbek (cloud model)")
+        case .uzbek: return L("Uzbek — Premium")
         }
     }
 }
@@ -12209,6 +12220,10 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         openControlPanelFromAgent()
     }
 
+    @objc private func openPanelClicked(_ sender: NSMenuItem) {
+        openControlPanelFromAgent()
+    }
+
     @objc private func quitClicked(_ sender: NSMenuItem) {
         guard confirmStopDictation() else { return }
         NSApp.terminate(self)
@@ -12369,6 +12384,12 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if shouldShowSpeechModelProgressRow {
             menu.addItem(buildSpeechModelProgressItem())
         }
+
+        let openPanel = NSMenuItem(title: L("Open SPEAKEX Panel…"),
+                                   action: #selector(openPanelClicked(_:)),
+                                   keyEquivalent: "")
+        openPanel.target = self
+        menu.addItem(openPanel)
 
         menu.addItem(.separator())
 
@@ -13178,7 +13199,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         waveform.state = settings.showRecordingWaveform ? .on : .off
         sub.addItem(waveform)
 
-        let optionCommandEnter = NSMenuItem(title: L("Sends Enter"),
+        let optionCommandEnter = NSMenuItem(title: L("Auto-send"),
                                             action: #selector(toggleOptionCommandEnter(_:)),
                                             keyEquivalent: "")
         optionCommandEnter.target = self
@@ -13250,7 +13271,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         sub.autoenablesItems = false
         let choices: [(SpeechModelProfile, String)] = [
             (.multilingualV3, L("Parakeet v3 — Local · Free")),
-            (.openaiCloud, L("OpenAI Cloud — Cloud · API key")),
+            (.openaiCloud, L("OpenAI Cloud — Cloud · Premium")),
         ]
         let busy = isRecording || isBusy || isTerminating || startupTask != nil
             || isResettingSpeechModelCache || isSwitchingSpeechModel
@@ -19477,6 +19498,8 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             serviceButtonsView(),
         ]))
 
+        root.addArrangedSubview(sectionCard(title: L("Statistics"), icon: "chart.bar", rows: statisticsRows()))
+
         root.addArrangedSubview(sectionCard(title: L("Permissions"), icon: "lock.shield",
                                             rows: Permission.allCases.map { permissionRow($0) }))
 
@@ -19486,15 +19509,15 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                      selectedValue: settings.speechModelProfile.rawValue,
                      options: [
                          (L("Parakeet v3 — Local · Free"), SpeechModelProfile.multilingualV3.rawValue),
-                         (L("OpenAI Cloud — Cloud · API key"), SpeechModelProfile.openaiCloud.rawValue),
+                         (L("OpenAI Cloud — Cloud · Premium"), SpeechModelProfile.openaiCloud.rawValue),
                      ],
                      action: #selector(selectSpeechModelClicked(_:))),
             popupRow(title: L("Language"),
-                     detail: L("Uzbek is available only with the cloud speech model."),
+                     detail: L("Uzbek needs the cloud speech model — Premium."),
                      selectedValue: settings.processingLanguage.rawValue,
                      options: [
-                         (L("Russian and English"), ProcessingLanguage.auto.rawValue),
-                         (L("Uzbek (cloud model)"), ProcessingLanguage.uzbek.rawValue),
+                         (L("Russian / English (auto)"), ProcessingLanguage.auto.rawValue),
+                         (L("Uzbek — Premium"), ProcessingLanguage.uzbek.rawValue),
                      ],
                      action: #selector(selectLanguageClicked(_:))),
             popupRow(title: L("Transcription model"),
@@ -19532,7 +19555,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                      selectedValue: currentHotkeyValue,
                      options: hotkeyOptions,
                      action: #selector(selectHotkeyClicked(_:))),
-            checkboxRow(title: L("Sends Enter"),
+            checkboxRow(title: L("Auto-send"),
                         detail: L("When on, dictation presses Enter after inserting text. When off (default), it only inserts the text."),
                         isOn: settings.optionCommandEnterAfterDictation,
                         action: #selector(toggleOptionCommandEnterClicked(_:))),
@@ -19587,25 +19610,22 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                      options: TranslatorDirection.allCases.map { ($0.displayName, $0.rawValue) },
                      action: #selector(selectTranslatorClicked(_:)),
                      enabled: aiUnlocked),
-            statusRow(title: L("Text correction: extra instructions"),
-                      detail: promptPreview(settings.textPolishCustomInstructions,
-                                            placeholder: L("Optional: style or terminology guidance. The default rule (only fix errors, never rewrite) always applies.")),
-                      status: "",
-                      statusColor: .secondaryLabelColor,
+            statusRow(title: L("Text correction instructions"),
+                      detail: L("Extra style or terminology guidance for the corrector. Always added on top of the built-in rule: only fix errors, never rewrite."),
+                      status: settings.textPolishCustomInstructions.isEmpty ? L("Not set") : L("Configured"),
+                      statusColor: settings.textPolishCustomInstructions.isEmpty ? .secondaryLabelColor : .systemGreen,
                       buttonTitle: L("Edit…"),
                       action: #selector(editTextPolishInstructionsClicked(_:)),
                       buttonEnabled: aiUnlocked),
-            statusRow(title: L("Translator: extra instructions"),
-                      detail: promptPreview(settings.translatorCustomInstructions,
-                                            placeholder: L("Optional: tone or terminology guidance for the translator.")),
-                      status: "",
-                      statusColor: .secondaryLabelColor,
+            statusRow(title: L("Translator instructions"),
+                      detail: L("Extra tone or terminology guidance for the translator."),
+                      status: settings.translatorCustomInstructions.isEmpty ? L("Not set") : L("Configured"),
+                      statusColor: settings.translatorCustomInstructions.isEmpty ? .secondaryLabelColor : .systemGreen,
                       buttonTitle: L("Edit…"),
                       action: #selector(editTranslatorInstructionsClicked(_:)),
                       buttonEnabled: aiUnlocked),
         ]))
 
-        root.addArrangedSubview(sectionCard(title: L("Statistics"), icon: "chart.bar", rows: statisticsRows()))
         root.addArrangedSubview(sectionCard(title: L("History"), icon: "clock.arrow.circlepath", rows: historyRows()))
 
         let container = PanelScrollContentView()
@@ -20278,8 +20298,8 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
 
     @objc private func editTextPolishInstructionsClicked(_ sender: NSButton) {
         guard let value = editMultilineText(
-            title: L("Text correction: extra instructions"),
-            informative: L("Optional: style or terminology guidance. The default rule (only fix errors, never rewrite) always applies."),
+            title: L("Text correction instructions"),
+            informative: L("Extra style or terminology guidance for the corrector. Always added on top of the built-in rule: only fix errors, never rewrite."),
             currentValue: settings.textPolishCustomInstructions
         ) else { return }
         settings.textPolishCustomInstructions = value
@@ -20288,8 +20308,8 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
 
     @objc private func editTranslatorInstructionsClicked(_ sender: NSButton) {
         guard let value = editMultilineText(
-            title: L("Translator: extra instructions"),
-            informative: L("Optional: tone or terminology guidance for the translator."),
+            title: L("Translator instructions"),
+            informative: L("Extra tone or terminology guidance for the translator."),
             currentValue: settings.translatorCustomInstructions
         ) else { return }
         settings.translatorCustomInstructions = value
