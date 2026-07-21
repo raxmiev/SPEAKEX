@@ -384,6 +384,8 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Language of the SPEAKEX menus and panel.": ["ru": "Язык меню и панели SPEAKEX.", "uz": "SPEAKEX menyulari va paneli tili."],
     "Option + Command sends Enter": ["ru": "Option + Command отправляет Enter", "uz": "Option + Command Enter yuboradi"],
     "On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter.": ["ru": "Вкл: текст просто вставляется, без Enter. Выкл: после вставки автоматически нажимается Enter.", "uz": "Yoqilgan: matn Enter bosilmasdan qo‘yiladi. O‘chirilgan: qo‘yilgandan keyin Enter bosiladi."],
+    "Sends Enter": ["ru": "Отправляет Enter", "uz": "Enter yuboradi"],
+    "When on, dictation presses Enter after inserting text. When off (default), it only inserts the text.": ["ru": "Если включено, после вставки текста автоматически нажимается Enter. Если выключено (по умолчанию), текст просто вставляется.", "uz": "Yoqilgan bo‘lsa, matn qo‘yilgandan keyin Enter avtomatik bosiladi. O‘chirilgan bo‘lsa (standart), matn shunchaki qo‘yiladi."],
     "Recording color": ["ru": "Цвет записи", "uz": "Yozish rangi"],
     "Color used while the microphone is listening.": ["ru": "Цвет, пока микрофон слушает.", "uz": "Mikrofon eshitayotganda ishlatiladigan rang."],
     "Transcribing color": ["ru": "Цвет расшифровки", "uz": "Matnga o‘girish rangi"],
@@ -518,6 +520,7 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "An OpenAI API key is required for AI features.": ["ru": "Для функций ИИ нужен API-ключ OpenAI.", "uz": "AI funksiyalari uchun OpenAI API kaliti kerak."],
     "Text correction (AI)": ["ru": "Корректировка текста (ИИ)", "uz": "Matnni AI tuzatishi"],
     "Fixes recognition errors and grammar via the OpenAI API. Only the text is sent to the cloud.": ["ru": "Исправляет ошибки распознавания и грамматику через OpenAI API. В облако отправляется только текст.", "uz": "OpenAI API orqali xatolar va grammatika tuzatiladi. Bulutga faqat matn yuboriladi."],
+    "Fixes recognition errors and grammar via the OpenAI API. Adds roughly 1–3s before text appears (network round trip). Only the text is sent to the cloud.": ["ru": "Исправляет ошибки распознавания и грамматику через OpenAI API. Добавляет примерно 1–3 с перед вставкой текста (запрос по сети). В облако отправляется только текст.", "uz": "OpenAI API orqali xatolar va grammatika tuzatiladi. Matn chiqishidan oldin taxminan 1–3 soniya qo‘shadi (tarmoq so‘rovi). Bulutga faqat matn yuboriladi."],
     "Recognition": ["ru": "Распознавание", "uz": "Tanib olish"],
     "Language": ["ru": "Язык", "uz": "Til"],
     "Auto": ["ru": "Авто", "uz": "Avto"],
@@ -535,6 +538,8 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Speech model": ["ru": "Модель распознавания", "uz": "Nutq modeli"],
     "Parakeet v3 (local, free)": ["ru": "Parakeet v3 (локально, бесплатно)", "uz": "Parakeet v3 (lokal, bepul)"],
     "OpenAI Cloud (needs API key)": ["ru": "OpenAI Облако (нужен API-ключ)", "uz": "OpenAI Bulut (API kalit kerak)"],
+    "Parakeet v3 — Local · Free": ["ru": "Parakeet v3 — Локально · Бесплатно", "uz": "Parakeet v3 — Lokal · Bepul"],
+    "OpenAI Cloud — Cloud · API key": ["ru": "OpenAI Cloud — Облако · Нужен API-ключ", "uz": "OpenAI Cloud — Bulut · API kalit kerak"],
     "An OpenAI API key is required for the cloud speech model.": ["ru": "Для облачной модели распознавания нужен API-ключ OpenAI.", "uz": "Bulutli nutq modeli uchun OpenAI API kaliti kerak."],
     "The local model stays available offline; the cloud model is more accurate.": ["ru": "Локальная модель работает офлайн; облачная — точнее.", "uz": "Lokal model oflayn ishlaydi; bulutli model aniqroq."],
     "Transcription model": ["ru": "Модель транскрибации", "uz": "Transkripsiya modeli"],
@@ -549,6 +554,7 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Translator: extra instructions": ["ru": "Переводчик: доп. инструкции", "uz": "Tarjimon: qo‘shimcha ko‘rsatmalar"],
     "Optional: tone or terminology guidance for the translator.": ["ru": "Необязательно: указания по тону или терминологии для переводчика.", "uz": "Ixtiyoriy: tarjimon uchun ohang yoki atama bo‘yicha ko‘rsatmalar."],
     "Russian / English": ["ru": "Русский / English", "uz": "Ruscha / Inglizcha"],
+    "Russian and English": ["ru": "Русский и английский", "uz": "Ruscha va inglizcha"],
     "Statistics": ["ru": "Статистика", "uz": "Statistika"],
     "History": ["ru": "История", "uz": "Tarix"],
     "DICTATIONS": ["ru": "ДИКТОВКИ", "uz": "DIKTOVKALAR"],
@@ -774,7 +780,11 @@ enum TextPolisher {
                              model: String) async -> String? {
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
         request.httpMethod = "POST"
-        request.timeoutInterval = 20
+        // Runs on the critical path before text is inserted (see the
+        // release-handling pipeline) — a short ceiling bounds how long
+        // a slow API response can hold up dictation before falling
+        // back to the raw transcript.
+        request.timeoutInterval = 8
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         let payload: [String: Any] = [
@@ -7682,13 +7692,17 @@ private enum DictationReleaseShortcut: Equatable {
     case alternate
 }
 
+/// Direct semantics: `sendsEnter == true` means the ordinary hotkey
+/// release presses Enter after inserting. The alternate chord
+/// (Option + hotkey, on hotkeys other than Right Option) always does
+/// the opposite of the setting.
 private func shouldPressEnterAfterDictation(shortcut: DictationReleaseShortcut,
-                                            optionCommandSendsEnter: Bool) -> Bool {
+                                            optionCommandSendsEnter sendsEnter: Bool) -> Bool {
     switch shortcut {
     case .standard:
-        return !optionCommandSendsEnter
+        return sendsEnter
     case .alternate:
-        return optionCommandSendsEnter
+        return !sendsEnter
     }
 }
 
@@ -13164,12 +13178,12 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         waveform.state = settings.showRecordingWaveform ? .on : .off
         sub.addItem(waveform)
 
-        let optionCommandEnter = NSMenuItem(title: L("Option+Command sends Enter"),
+        let optionCommandEnter = NSMenuItem(title: L("Sends Enter"),
                                             action: #selector(toggleOptionCommandEnter(_:)),
                                             keyEquivalent: "")
         optionCommandEnter.target = self
         optionCommandEnter.state = settings.optionCommandEnterAfterDictation ? .on : .off
-        optionCommandEnter.toolTip = L("On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter.")
+        optionCommandEnter.toolTip = L("When on, dictation presses Enter after inserting text. When off (default), it only inserts the text.")
         sub.addItem(optionCommandEnter)
 
         let mute = NSMenuItem(title: L("Mute system audio while recording"),
@@ -13235,8 +13249,8 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let sub = NSMenu()
         sub.autoenablesItems = false
         let choices: [(SpeechModelProfile, String)] = [
-            (.multilingualV3, L("Parakeet v3 (local, free)")),
-            (.openaiCloud, L("OpenAI Cloud (needs API key)")),
+            (.multilingualV3, L("Parakeet v3 — Local · Free")),
+            (.openaiCloud, L("OpenAI Cloud — Cloud · API key")),
         ]
         let busy = isRecording || isBusy || isTerminating || startupTask != nil
             || isResettingSpeechModelCache || isSwitchingSpeechModel
@@ -19128,29 +19142,32 @@ private enum SpeakexSelfTest {
     }
 
     private static func testEnterShortcutModeSelection() throws {
+        // Direct semantics: sendsEnter == true means the plain hotkey
+        // press sends Enter; the alternate chord always does the
+        // opposite. Default (sendsEnter == false) sends no Enter.
         try expect(
             shouldPressEnterAfterDictation(shortcut: .standard,
                                            optionCommandSendsEnter: true),
-            equals: false,
-            "option-command mode should keep plain command without Enter"
+            equals: true,
+            "enabled: plain hotkey should press Enter"
         )
         try expect(
             shouldPressEnterAfterDictation(shortcut: .alternate,
                                            optionCommandSendsEnter: true),
-            equals: true,
-            "option-command mode should make option-command press Enter"
+            equals: false,
+            "enabled: alternate chord should finish without Enter"
         )
         try expect(
             shouldPressEnterAfterDictation(shortcut: .standard,
                                            optionCommandSendsEnter: false),
-            equals: true,
-            "default mode should make plain command press Enter"
+            equals: false,
+            "default (disabled): plain hotkey should not press Enter"
         )
         try expect(
             shouldPressEnterAfterDictation(shortcut: .alternate,
                                            optionCommandSendsEnter: false),
-            equals: false,
-            "default mode should make option-command finish without Enter"
+            equals: true,
+            "default (disabled): alternate chord should press Enter"
         )
     }
 
@@ -19455,30 +19472,28 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         root.addArrangedSubview(title)
         root.addArrangedSubview(subtitle)
 
-        root.addArrangedSubview(sectionCard(title: L("Service"), rows: [
+        root.addArrangedSubview(sectionCard(title: L("Service"), icon: "power", rows: [
             serviceStatusView(),
             serviceButtonsView(),
         ]))
 
-        root.addArrangedSubview(sectionCard(title: L("Permissions"),
+        root.addArrangedSubview(sectionCard(title: L("Permissions"), icon: "lock.shield",
                                             rows: Permission.allCases.map { permissionRow($0) }))
 
-        root.addArrangedSubview(sectionCard(title: L("Recognition"), rows: [
+        root.addArrangedSubview(sectionCard(title: L("Recognition"), icon: "waveform", rows: [
             popupRow(title: L("Speech model"),
                      detail: L("The local model stays available offline; the cloud model is more accurate."),
                      selectedValue: settings.speechModelProfile.rawValue,
                      options: [
-                         (L("Parakeet v3 (local, free)"), SpeechModelProfile.multilingualV3.rawValue),
-                         (L("OpenAI Cloud (needs API key)"), SpeechModelProfile.openaiCloud.rawValue),
+                         (L("Parakeet v3 — Local · Free"), SpeechModelProfile.multilingualV3.rawValue),
+                         (L("OpenAI Cloud — Cloud · API key"), SpeechModelProfile.openaiCloud.rawValue),
                      ],
                      action: #selector(selectSpeechModelClicked(_:))),
             popupRow(title: L("Language"),
                      detail: L("Uzbek is available only with the cloud speech model."),
                      selectedValue: settings.processingLanguage.rawValue,
                      options: [
-                         (L("Russian / English"), ProcessingLanguage.auto.rawValue),
-                         (L("Russian"), ProcessingLanguage.russian.rawValue),
-                         (L("English"), ProcessingLanguage.english.rawValue),
+                         (L("Russian and English"), ProcessingLanguage.auto.rawValue),
                          (L("Uzbek (cloud model)"), ProcessingLanguage.uzbek.rawValue),
                      ],
                      action: #selector(selectLanguageClicked(_:))),
@@ -19511,14 +19526,14 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             hotkeyOptions.insert((hotkeyChoice(forKeycode: settings.hotkeyKeycode).name,
                                   currentHotkeyValue), at: 0)
         }
-        root.addArrangedSubview(sectionCard(title: L("Settings"), rows: [
+        root.addArrangedSubview(sectionCard(title: L("Settings"), icon: "gearshape", rows: [
             popupRow(title: L("Dictation key"),
                      detail: L(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue.lowercased()),
                      selectedValue: currentHotkeyValue,
                      options: hotkeyOptions,
                      action: #selector(selectHotkeyClicked(_:))),
-            checkboxRow(title: L("Option + Command sends Enter"),
-                        detail: L("On: dictation pastes text without pressing Enter. Off: finishing dictation also presses Enter."),
+            checkboxRow(title: L("Sends Enter"),
+                        detail: L("When on, dictation presses Enter after inserting text. When off (default), it only inserts the text."),
                         isOn: settings.optionCommandEnterAfterDictation,
                         action: #selector(toggleOptionCommandEnterClicked(_:))),
             checkboxRow(title: L("Play feedback sounds"),
@@ -19552,7 +19567,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         ]))
 
         let aiUnlocked = OpenAIKeyStore.isConfigured
-        root.addArrangedSubview(sectionCard(title: L("AI features"), rows: [
+        root.addArrangedSubview(sectionCard(title: L("AI features"), icon: "sparkles", rows: [
             statusRow(title: L("OpenAI API key"),
                       detail: aiUnlocked
                           ? L("Configured. Text correction and the translator are unlocked.")
@@ -19562,7 +19577,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                       buttonTitle: L("Enter Key…"),
                       action: #selector(enterAPIKeyClicked(_:))),
             checkboxRow(title: L("Text correction (AI)"),
-                        detail: L("Fixes recognition errors and grammar via the OpenAI API. Only the text is sent to the cloud."),
+                        detail: L("Fixes recognition errors and grammar via the OpenAI API. Adds roughly 1–3s before text appears (network round trip). Only the text is sent to the cloud."),
                         isOn: aiUnlocked && settings.textPolishEnabled,
                         action: #selector(toggleTextPolishClicked(_:)),
                         enabled: aiUnlocked),
@@ -19590,8 +19605,8 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                       buttonEnabled: aiUnlocked),
         ]))
 
-        root.addArrangedSubview(sectionCard(title: L("Statistics"), rows: statisticsRows()))
-        root.addArrangedSubview(sectionCard(title: L("History"), rows: historyRows()))
+        root.addArrangedSubview(sectionCard(title: L("Statistics"), icon: "chart.bar", rows: statisticsRows()))
+        root.addArrangedSubview(sectionCard(title: L("History"), icon: "clock.arrow.circlepath", rows: historyRows()))
 
         let container = PanelScrollContentView()
         container.addSubview(root)
@@ -19794,6 +19809,24 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         panelLabel(text, size: 14, weight: .semibold)
     }
 
+    /// Section title with an optional leading SF Symbol — mainly so
+    /// Statistics and History (visually similar card-of-rows layouts)
+    /// read as distinct sections at a glance, not just by their text.
+    private func sectionHeader(_ title: String, icon: String?) -> NSView {
+        guard let icon else { return sectionLabel(title) }
+        let row = NSStackView()
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 6
+        let imageView = NSImageView()
+        imageView.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 13, weight: .semibold))
+        imageView.contentTintColor = .secondaryLabelColor
+        row.addArrangedSubview(imageView)
+        row.addArrangedSubview(sectionLabel(title))
+        return row
+    }
+
     private func panelLabel(_ text: String,
                             size: CGFloat,
                             weight: NSFont.Weight = .regular,
@@ -19832,7 +19865,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     /// whole card to zero size. Pinning a plain subview to the box's
     /// own edges with explicit constraints — the same pattern already
     /// used for the outer scroll content — avoids that entirely.
-    private func sectionCard(title: String, rows: [NSView]) -> NSView {
+    private func sectionCard(title: String, icon: String? = nil, rows: [NSView]) -> NSView {
         let card = NSBox()
         card.boxType = .custom
         card.titlePosition = .noTitle
@@ -19847,7 +19880,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         stack.alignment = .leading
         stack.spacing = 12
         stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(sectionLabel(title))
+        stack.addArrangedSubview(sectionHeader(title, icon: icon))
         for (index, row) in rows.enumerated() {
             if index > 0 {
                 stack.addArrangedSubview(separator())
