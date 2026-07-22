@@ -67,7 +67,6 @@ let AGENT_ARGUMENT = "--agent"
 let AGENT_LABEL = "com.local.speakex.agent"
 let APP_SUPPORT_DIR_NAME = "SPEAKEX"
 let AGENT_STATUS_FILE_NAME = "AgentStatus.json"
-let CONTROL_PANEL_PID_FILE_NAME = "ControlPanel.pid"
 let UPDATE_HELPER_LOG_PATH = (NSHomeDirectory() as NSString)
     .appendingPathComponent("Library/Logs/SPEAKEX-update.log")
 let UPDATE_PROGRESS_ARGUMENT = "--update-progress"
@@ -525,8 +524,6 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Uzbek": ["ru": "Узбекский", "uz": "O‘zbekcha"],
     "Russian / English (auto)": ["ru": "Русский / English (авто)", "uz": "Ruscha / English (avto)"],
     "Uzbek needs the cloud speech model — Premium.": ["ru": "Узбекскому нужна облачная модель распознавания — Премиум.", "uz": "O‘zbekcha uchun bulutli nutq modeli kerak — Premium."],
-    "Uzbek needs the cloud model": ["ru": "Узбекскому нужна облачная модель", "uz": "O‘zbekcha bulut modelini talab qiladi"],
-    "The local model cannot recognize Uzbek. Change the language first, or keep the cloud model.": ["ru": "Локальная модель не распознаёт узбекский. Сначала смените язык или оставьте облачную модель.", "uz": "Lokal model o‘zbekchani tanimaydi. Avval tilni o‘zgartiring yoki bulut modelini qoldiring."],
     "Translator": ["ru": "Переводчик", "uz": "Tarjimon"],
     "Translator off": ["ru": "Выключен", "uz": "O‘chirilgan"],
     "Choose a language to translate the dictation into.": ["ru": "Выберите язык, на который переводить надиктованный текст.", "uz": "Diktovka qaysi tilga tarjima qilinishini tanlang."],
@@ -838,6 +835,22 @@ enum TextPolisher {
 /// never holds an OpenAI key. Audio is uploaded as a 16 kHz mono WAV;
 /// the 25 MB API limit allows roughly 13 minutes per clip.
 enum OpenAICloudASR {
+    /// Whisper-family models (including OpenAI's gpt-4o-transcribe)
+    /// saw far more Cyrillic Uzbek than Latin during training, so
+    /// without a nudge they sometimes transcribe spoken Uzbek into
+    /// Cyrillic — even though the rest of the app (text correction,
+    /// translator) assumes Latin script throughout. OpenAI's
+    /// transcription `prompt` field is a style/vocabulary hint, not a
+    /// hard constraint, so this biases rather than guarantees the
+    /// output script.
+    private static let uzbekLatinScriptHint = "Bu matn o'zbek tilida, lotin alifbosida yozilgan."
+
+    static func effectivePrompt(processingLanguage: ProcessingLanguage, userPrompt: String) -> String {
+        guard processingLanguage == .uzbek else { return userPrompt }
+        guard !userPrompt.isEmpty else { return uzbekLatinScriptHint }
+        return "\(uzbekLatinScriptHint) \(userPrompt)"
+    }
+
     static func transcribe(samples: [Float],
                            languageCode: String?,
                            model: String = "gpt-4o-transcribe",
@@ -2651,59 +2664,31 @@ enum AgentRuntimeStateStore {
     }
 }
 
+/// Single-instance enforcement for the control panel (`.regular`
+/// activation policy, visible in the Dock — the agent runs
+/// `.accessory` and is a different process entirely). Used to read a
+/// PID we wrote to a file ourselves on the previous launch, which had
+/// a real TOCTOU race: two near-simultaneous launches (e.g. macOS's
+/// own "Quit & Reopen" flow after a permission change) could both
+/// read "no valid PID yet" before either had written its own, so both
+/// proceeded to show a window — or, the reverse, the old process could
+/// still "own" the file while genuinely mid-quit, so activate() would
+/// silently no-op and neither window ended up visible. Querying
+/// `NSRunningApplication`'s live process table instead has no file to
+/// go stale — it's the OS's own bookkeeping, always current.
 enum SPEAKEXControlPanelRegistry {
-    static var url: URL {
-        (try? speakexApplicationSupportDirectory()
-            .appendingPathComponent(CONTROL_PANEL_PID_FILE_NAME)) ??
-        FileManager.default.temporaryDirectory.appendingPathComponent(CONTROL_PANEL_PID_FILE_NAME)
-    }
-
     @MainActor
     static func activateExistingPanelIfPresent() -> Bool {
-        guard let pid = currentPanelPID() else {
-            return false
-        }
-        if let app = NSRunningApplication(processIdentifier: pid) {
-            app.activate(options: [.activateAllWindows])
-            return true
-        }
-        return false
-    }
-
-    static func terminateExistingPanelIfPresent() -> Bool {
-        guard let pid = currentPanelPID() else { return false }
-        if let app = NSRunningApplication(processIdentifier: pid),
-           app.terminate() {
-            return true
-        }
-        kill(pid, SIGTERM)
+        guard let existing = existingPanelApp() else { return false }
+        existing.activate(options: [.activateAllWindows])
         return true
     }
 
-    static func claimCurrentPanel() {
-        do {
-            try "\(getpid())\n".write(to: url, atomically: true, encoding: .utf8)
-        } catch {
-            log("control panel pid write failed: \(error.localizedDescription)")
-        }
-    }
-
-    static func clearCurrentPanel() {
-        guard let raw = try? String(contentsOf: url, encoding: .utf8),
-              let pid = Int32(raw.trimmingCharacters(in: .whitespacesAndNewlines)),
-              pid == getpid() else { return }
-        try? FileManager.default.removeItem(at: url)
-    }
-
-    private static func currentPanelPID() -> Int32? {
-        guard let raw = try? String(contentsOf: url, encoding: .utf8),
-              let pid = Int32(raw.trimmingCharacters(in: .whitespacesAndNewlines)),
-              pid > 0,
-              pid != getpid(),
-              processIsAlive(pid: pid) else {
-            return nil
-        }
-        return pid
+    private static func existingPanelApp() -> NSRunningApplication? {
+        guard let bundleID = Bundle.main.bundleIdentifier else { return nil }
+        return NSRunningApplication
+            .runningApplications(withBundleIdentifier: bundleID)
+            .first { $0.processIdentifier != getpid() && $0.activationPolicy == .regular }
     }
 
     private static func processIsAlive(pid: Int32) -> Bool {
@@ -5352,10 +5337,12 @@ actor TranscriptionWorker {
             let callStartedAt = ProcessInfo.processInfo.systemUptime
             let code = cloudSpeechLanguageCode(processing: Settings.shared.processingLanguage,
                                                dictation: Settings.shared.dictationLanguage)
+            let prompt = OpenAICloudASR.effectivePrompt(processingLanguage: Settings.shared.processingLanguage,
+                                                        userPrompt: Settings.shared.transcribePrompt)
             let text = try await OpenAICloudASR.transcribe(samples: samples,
                                                             languageCode: code,
                                                             model: Settings.shared.transcribeModel,
-                                                            prompt: Settings.shared.transcribePrompt)
+                                                            prompt: prompt)
             let callCompletedAt = ProcessInfo.processInfo.systemUptime
             return TranscriptionWorkerResult(
                 text: text,
@@ -13341,19 +13328,13 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
               profile != settings.speechModelProfile,
               startupTask == nil, !isRecording, !isBusy,
               !isResettingSpeechModelCache, !isSwitchingSpeechModel else { return }
-        // Mirror the panel's guard: the local model cannot recognize
-        // Uzbek at all, so switching to it while Uzbek is selected
-        // would silently produce garbage transcripts instead of an
-        // error — block it with an explanation instead.
+        // The local model cannot recognize Uzbek at all — rather than
+        // block the switch (which left the model on cloud without it
+        // being obvious the switch was rejected), fall back to the
+        // auto Russian/English language so the switch actually happens.
         if profile != .openaiCloud, settings.processingLanguage == .uzbek {
-            showAppForModal()
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText = L("Uzbek needs the cloud model")
-            alert.informativeText = L("The local model cannot recognize Uzbek. Change the language first, or keep the cloud model.")
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
-            return
+            settings.processingLanguage = .auto
+            settings.dictationLanguage = .auto
         }
         let previous = settings.speechModelProfile
         settings.speechModelProfile = profile
@@ -19362,7 +19343,6 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             NSApp.terminate(nil)
             return
         }
-        SPEAKEXControlPanelRegistry.claimCurrentPanel()
         installStandardEditMenu()
         if settings.agentEnabled && !SPEAKEXAgentService.isAgentRunning() {
             do {
@@ -19387,7 +19367,6 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     func applicationWillTerminate(_ notification: Notification) {
         refreshTimer?.invalidate()
         refreshTimer = nil
-        SPEAKEXControlPanelRegistry.clearCurrentPanel()
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -20289,10 +20268,13 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
               let profile = SpeechModelProfile(rawValue: raw),
               profile.isProductionSupported else { return }
         if profile != .openaiCloud, settings.processingLanguage == .uzbek {
-            showError(title: L("Uzbek needs the cloud model"),
-                      detail: L("The local model cannot recognize Uzbek. Change the language first, or keep the cloud model."))
-            refresh(force: true)
-            return
+            // The local model can't recognize Uzbek at all — rather than
+            // block the switch (which silently left the model on cloud
+            // if the user didn't notice the error), fall back to the
+            // auto Russian/English language so the switch actually
+            // takes effect, same as switching away from Uzbek directly.
+            settings.processingLanguage = .auto
+            settings.dictationLanguage = .auto
         }
         guard profile != settings.speechModelProfile else { return }
         settings.speechModelProfile = profile
