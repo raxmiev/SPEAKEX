@@ -19326,11 +19326,35 @@ private final class PanelScrollContentView: NSView {
 }
 
 @MainActor
+/// The panel groups its section cards into four tabs so the window
+/// isn't one long scroll of everything at once. Grouping is by how
+/// often each pair gets used together, not alphabetical: Service is
+/// where you check whether dictation is even running, so it's paired
+/// with Permissions (the other "is this working" concern); Recognition
+/// and AI features are both "how does dictation behave" settings.
+private enum PanelTab: Int, CaseIterable {
+    case service
+    case statisticsHistory
+    case recognitionFeatures
+    case settings
+
+    var title: String {
+        switch self {
+        case .service: return L("Service")
+        case .statisticsHistory: return L("Statistics")
+        case .recognitionFeatures: return L("Recognition")
+        case .settings: return L("Settings")
+        }
+    }
+}
+
+@MainActor
 private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow?
     private var refreshTimer: Timer?
     private let settings = Settings.shared
     private var permissionClickCount: [Permission: Int] = [:]
+    private var selectedPanelTab: PanelTab = .service
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -19471,22 +19495,21 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         }
     }
 
-    private func makeContentView() -> NSView {
-        let root = NSStackView()
-        root.orientation = .vertical
-        root.alignment = .leading
-        root.spacing = 16
-        root.edgeInsets = NSEdgeInsets(top: 22, left: 24, bottom: 20, right: 24)
-        root.translatesAutoresizingMaskIntoConstraints = false
+    private func sections(for tab: PanelTab) -> [NSView] {
+        switch tab {
+        case .service:
+            return [serviceSectionCard(), permissionsSectionCard()]
+        case .statisticsHistory:
+            return [statisticsSectionCard(), historySectionCard()]
+        case .recognitionFeatures:
+            return [recognitionSectionCard(), aiFeaturesSectionCard()]
+        case .settings:
+            return [settingsSectionCard()]
+        }
+    }
 
-        let title = panelLabel("SPEAKEX", size: 24, weight: .semibold)
-        let subtitle = panelLabel(L("Control panel. Closing this window does not stop dictation."),
-                                  size: 13,
-                                  color: .secondaryLabelColor)
-        root.addArrangedSubview(title)
-        root.addArrangedSubview(subtitle)
-
-        root.addArrangedSubview(sectionCard(title: L("Service"), icon: "power", rows: [
+    private func serviceSectionCard() -> NSView {
+        sectionCard(title: L("Service"), icon: "power", rows: [
             serviceStatusView(),
             serviceButtonsView(),
             statusRow(title: L("Install ID"),
@@ -19495,14 +19518,24 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                       statusColor: .secondaryLabelColor,
                       buttonTitle: L("Copy"),
                       action: #selector(copyDeviceIdClicked(_:))),
-        ]))
+        ])
+    }
 
-        root.addArrangedSubview(sectionCard(title: L("Statistics"), icon: "chart.bar", rows: statisticsRows()))
+    private func permissionsSectionCard() -> NSView {
+        sectionCard(title: L("Permissions"), icon: "lock.shield",
+                   rows: Permission.allCases.map { permissionRow($0) })
+    }
 
-        root.addArrangedSubview(sectionCard(title: L("Permissions"), icon: "lock.shield",
-                                            rows: Permission.allCases.map { permissionRow($0) }))
+    private func statisticsSectionCard() -> NSView {
+        sectionCard(title: L("Statistics"), icon: "chart.bar", rows: statisticsRows())
+    }
 
-        root.addArrangedSubview(sectionCard(title: L("Recognition"), icon: "waveform", rows: [
+    private func historySectionCard() -> NSView {
+        sectionCard(title: L("History"), icon: "clock.arrow.circlepath", rows: historyRows())
+    }
+
+    private func recognitionSectionCard() -> NSView {
+        sectionCard(title: L("Recognition"), icon: "waveform", rows: [
             popupRow(title: L("Speech model"),
                      detail: L("The local model stays available offline; the cloud model is more accurate."),
                      selectedValue: settings.speechModelProfile.rawValue,
@@ -19536,8 +19569,10 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                       buttonTitle: L("Edit…"),
                       action: #selector(editTranscribePromptClicked(_:)),
                       buttonEnabled: settings.speechModelProfile == .openaiCloud),
-        ]))
+        ])
+    }
 
+    private func settingsSectionCard() -> NSView {
         var hotkeyOptions: [(title: String, value: String)] = [
             (L("Right Option"), "61"),
             (L("Right Command"), "54"),
@@ -19548,7 +19583,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             hotkeyOptions.insert((hotkeyChoice(forKeycode: settings.hotkeyKeycode).name,
                                   currentHotkeyValue), at: 0)
         }
-        root.addArrangedSubview(sectionCard(title: L("Settings"), icon: "gearshape", rows: [
+        return sectionCard(title: L("Settings"), icon: "gearshape", rows: [
             popupRow(title: L("Dictation key"),
                      detail: L(TRIGGER_DISPLAY[settings.triggerMode] ?? settings.triggerMode.rawValue.lowercased()),
                      selectedValue: currentHotkeyValue,
@@ -19586,9 +19621,11 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                      selectedValue: settings.uiLanguage.rawValue,
                      options: UILanguage.allCases.map { ($0.displayName, $0.rawValue) },
                      action: #selector(selectUILanguageClicked(_:))),
-        ]))
+        ])
+    }
 
-        root.addArrangedSubview(sectionCard(title: L("AI features"), icon: "sparkles", rows: [
+    private func aiFeaturesSectionCard() -> NSView {
+        sectionCard(title: L("AI features"), icon: "sparkles", rows: [
             checkboxRow(title: L("Text correction (AI)"),
                         detail: L("Fixes recognition errors and grammar via SPEAKEX's server. Adds roughly 1–3s before text appears (network round trip). Only the text is sent to the cloud."),
                         isOn: settings.textPolishEnabled,
@@ -19610,9 +19647,58 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                       statusColor: settings.translatorCustomInstructions.isEmpty ? .secondaryLabelColor : .systemGreen,
                       buttonTitle: L("Edit…"),
                       action: #selector(editTranslatorInstructionsClicked(_:))),
-        ]))
+        ])
+    }
 
-        root.addArrangedSubview(sectionCard(title: L("History"), icon: "clock.arrow.circlepath", rows: historyRows()))
+    private func tabBar() -> NSView {
+        var labels: [String] = []
+        for tab in PanelTab.allCases {
+            labels.append(tab.title)
+        }
+        let control = NSSegmentedControl(labels: labels,
+                                         trackingMode: .selectOne,
+                                         target: self,
+                                         action: #selector(panelTabChanged(_:)))
+        control.selectedSegment = selectedPanelTab.rawValue
+        control.translatesAutoresizingMaskIntoConstraints = false
+        return control
+    }
+
+    @objc private func panelTabChanged(_ sender: NSSegmentedControl) {
+        guard let tab = PanelTab(rawValue: sender.selectedSegment) else { return }
+        selectedPanelTab = tab
+        refresh(force: true)
+    }
+
+    private static let panelContentWidth: CGFloat = 620
+
+    private func makeContentView() -> NSView {
+        let header = NSStackView()
+        header.orientation = .vertical
+        header.alignment = .leading
+        header.spacing = 12
+        header.edgeInsets = NSEdgeInsets(top: 22, left: 24, bottom: 12, right: 24)
+        header.translatesAutoresizingMaskIntoConstraints = false
+
+        let title = panelLabel("SPEAKEX", size: 24, weight: .semibold)
+        let subtitle = panelLabel(L("Control panel. Closing this window does not stop dictation."),
+                                  size: 13,
+                                  color: .secondaryLabelColor)
+        header.addArrangedSubview(title)
+        header.addArrangedSubview(subtitle)
+        header.addArrangedSubview(tabBar())
+        header.widthAnchor.constraint(equalToConstant: Self.panelContentWidth).isActive = true
+
+        let root = NSStackView()
+        root.orientation = .vertical
+        root.alignment = .leading
+        root.spacing = 16
+        root.edgeInsets = NSEdgeInsets(top: 4, left: 24, bottom: 20, right: 24)
+        root.translatesAutoresizingMaskIntoConstraints = false
+
+        for view in sections(for: selectedPanelTab) {
+            root.addArrangedSubview(view)
+        }
 
         let container = PanelScrollContentView()
         container.addSubview(root)
@@ -19622,7 +19708,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
             root.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             root.topAnchor.constraint(equalTo: container.topAnchor),
             root.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            root.widthAnchor.constraint(equalToConstant: 620),
+            root.widthAnchor.constraint(equalToConstant: Self.panelContentWidth),
         ])
 
         let innerWidthInset = -(root.edgeInsets.left + root.edgeInsets.right)
@@ -19635,13 +19721,38 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         scroll.hasVerticalScroller = true
         scroll.autohidesScrollers = true
         scroll.drawsBackground = false
+        scroll.translatesAutoresizingMaskIntoConstraints = false
         scroll.documentView = container
         NSLayoutConstraint.activate([
             container.leadingAnchor.constraint(equalTo: scroll.contentView.leadingAnchor),
             container.topAnchor.constraint(equalTo: scroll.contentView.topAnchor),
             container.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor),
         ])
-        return scroll
+
+        // Plain view with explicit anchors, not a nested stack view —
+        // the header's height comes from its own intrinsic content
+        // size (title + subtitle + tab bar), and scroll fills
+        // whatever's left below it, spanning the full window width
+        // (like before) so its scrollbar still hugs the window's
+        // right edge — only the 620pt-wide content column inside it
+        // (`root`/`container`, unchanged above) stays fixed-width. A
+        // previous panel layout bug came from a self-referential
+        // constraint inside a box/stack hybrid, so this deliberately
+        // keeps every anchor pointing at a distinct, unambiguous view.
+        let outer = NSView()
+        outer.translatesAutoresizingMaskIntoConstraints = false
+        outer.addSubview(header)
+        outer.addSubview(scroll)
+        NSLayoutConstraint.activate([
+            header.topAnchor.constraint(equalTo: outer.topAnchor),
+            header.leadingAnchor.constraint(equalTo: outer.leadingAnchor),
+
+            scroll.topAnchor.constraint(equalTo: header.bottomAnchor),
+            scroll.leadingAnchor.constraint(equalTo: outer.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: outer.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: outer.bottomAnchor),
+        ])
+        return outer
     }
 
     private func serviceStatusView() -> NSView {
