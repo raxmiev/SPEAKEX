@@ -703,6 +703,27 @@ enum DeviceIdentity {
     }()
 }
 
+/// Non-identifying device context (macOS version, Mac model, app
+/// version) sent alongside DeviceIdentity.current so the admin panel
+/// can show what kind of install it's looking at, not just an opaque
+/// UUID. No serial numbers, no user/account info.
+enum DeviceMetadata {
+    static let summary: String = {
+        let os = ProcessInfo.processInfo.operatingSystemVersion
+        let osString = "macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion)"
+        return "\(osString), \(hardwareModel()), SPEAKEX \(currentBundleVersion())"
+    }()
+
+    private static func hardwareModel() -> String {
+        var size = 0
+        sysctlbyname("hw.model", nil, &size, nil, 0)
+        guard size > 0 else { return "unknown Mac" }
+        var buffer = [CChar](repeating: 0, count: size)
+        sysctlbyname("hw.model", &buffer, &size, nil, 0)
+        return buffer.withUnsafeBufferPointer { String(cString: $0.baseAddress!) }
+    }
+}
+
 func cloudSpeechLanguageCode(processing: ProcessingLanguage,
                              dictation: DictationLanguage) -> String? {
     if processing != .auto { return processing.rawValue }
@@ -792,6 +813,7 @@ enum TextPolisher {
         request.timeoutInterval = 8
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(DeviceIdentity.current, forHTTPHeaderField: "x-speakex-device-id")
+        request.setValue(DeviceMetadata.summary, forHTTPHeaderField: "x-speakex-device-info")
         request.setValue(purpose, forHTTPHeaderField: "x-speakex-purpose")
         let payload: [String: Any] = [
             "model": model,
@@ -861,6 +883,7 @@ enum OpenAICloudASR {
         request.httpMethod = "POST"
         request.timeoutInterval = 120
         request.setValue(DeviceIdentity.current, forHTTPHeaderField: "x-speakex-device-id")
+        request.setValue(DeviceMetadata.summary, forHTTPHeaderField: "x-speakex-device-info")
         request.setValue("multipart/form-data; boundary=\(boundary)",
                          forHTTPHeaderField: "Content-Type")
 
