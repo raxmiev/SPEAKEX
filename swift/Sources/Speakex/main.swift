@@ -533,7 +533,7 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "UzbekVoice — Cloud": ["ru": "UzbekVoice — Облако", "uz": "UzbekVoice — Bulut"],
     "The local model stays available offline; the cloud model is more accurate.": ["ru": "Локальная модель работает офлайн; облачная — точнее.", "uz": "Lokal model oflayn ishlaydi; bulutli model aniqroq."],
     "Transcription model": ["ru": "Модель транскрибации", "uz": "Transkripsiya modeli"],
-    "Only applies to the cloud speech model. Uzbek always uses its own dedicated model regardless of this setting.": ["ru": "Применяется только с облачной моделью распознавания. Для узбекского всегда используется своя отдельная модель независимо от этой настройки.", "uz": "Faqat bulutli nutq modeliga tegishli. O‘zbekcha uchun bu sozlamadan qat’i nazar har doim o‘ziga xos alohida model ishlatiladi."],
+    "Only applies to the cloud speech model.": ["ru": "Применяется только с облачной моделью распознавания.", "uz": "Faqat bulutli nutq modeliga tegishli."],
     "gpt-4o-transcribe (best accuracy)": ["ru": "gpt-4o-transcribe (максимальная точность)", "uz": "gpt-4o-transcribe (eng aniq)"],
     "gpt-4o-mini-transcribe (cheaper, less accurate)": ["ru": "gpt-4o-mini-transcribe (дешевле, менее точная)", "uz": "gpt-4o-mini-transcribe (arzon, kamroq aniq)"],
     "Transcription hint": ["ru": "Подсказка для транскрибации", "uz": "Transkripsiya uchun maslahat"],
@@ -2772,6 +2772,18 @@ enum SPEAKEXAgentService {
 
     static func restart() throws {
         stop()
+        // A fixed short sleep here was occasionally too short — the OS
+        // can still be tearing down the old process's resources (e.g.
+        // Neural Engine access for a CoreML model) even after
+        // launchd's own bootout bookkeeping considers the job gone,
+        // and reinstalling too early could race that teardown. Poll
+        // for the old process to actually disappear (agentProcessIDs
+        // does a real pgrep, independent of the state file stop()
+        // already wrote) before adding a further fixed buffer.
+        let deadline = Date().addingTimeInterval(3.0)
+        while !agentProcessIDs().isEmpty, Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.15)
+        }
         Thread.sleep(forTimeInterval: 0.35)
         try installAndStart()
     }
@@ -19358,16 +19370,16 @@ private final class PanelScrollContentView: NSView {
 /// and AI features are both "how does dictation behave" settings.
 private enum PanelTab: Int, CaseIterable {
     case service
-    case statisticsHistory
     case recognitionFeatures
     case settings
+    case statisticsHistory
 
     var title: String {
         switch self {
         case .service: return L("Service")
-        case .statisticsHistory: return L("Statistics")
         case .recognitionFeatures: return L("Recognition")
         case .settings: return L("Settings")
+        case .statisticsHistory: return L("Statistics")
         }
     }
 }
@@ -19576,7 +19588,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                      ],
                      action: #selector(selectLanguageClicked(_:))),
             popupRow(title: L("Transcription model"),
-                     detail: L("Only applies to the cloud speech model. Uzbek always uses its own dedicated model regardless of this setting."),
+                     detail: L("Only applies to the cloud speech model."),
                      selectedValue: settings.transcribeModel,
                      options: [
                          (L("gpt-4o-transcribe (best accuracy)"), "gpt-4o-transcribe"),
