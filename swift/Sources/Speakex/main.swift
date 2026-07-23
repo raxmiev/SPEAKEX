@@ -7312,13 +7312,9 @@ enum UpdateCheckFailure: Error, Equatable, Sendable {
 func manualUpdateCheckFailureText(_ failure: UpdateCheckFailure) -> String {
     switch failure {
     case .network:
-        return "SPEAKEX couldn't reach GitHub. Check your internet connection and try again."
-    case .httpStatus(403):
-        return "GitHub declined the update check (HTTP 403). This is usually temporary rate limiting — try again in a few minutes."
-    case .httpStatus(let code):
-        return "GitHub returned an error (HTTP \(code)). Try again later."
-    case .unexpectedResponse:
-        return "GitHub returned a response SPEAKEX couldn't read. Try again later, or check the releases page on GitHub directly."
+        return "Couldn't connect. Check your internet connection and try again."
+    case .httpStatus, .unexpectedResponse:
+        return "Couldn't check for updates right now. Please try again later."
     }
 }
 
@@ -18043,19 +18039,14 @@ private enum SpeakexSelfTest {
             "network failure text should point at connectivity"
         )
         try expect(
-            manualUpdateCheckFailureText(.httpStatus(403)).contains("rate limiting"),
-            equals: true,
-            "HTTP 403 failure text should mention rate limiting"
+            manualUpdateCheckFailureText(.httpStatus(403)),
+            equals: "Couldn't check for updates right now. Please try again later.",
+            "HTTP failure text should be plain-language, no HTTP/vendor jargon for the user"
         )
         try expect(
-            manualUpdateCheckFailureText(.httpStatus(500)).contains("HTTP 500"),
-            equals: true,
-            "HTTP failure text should include the status code"
-        )
-        try expect(
-            manualUpdateCheckFailureText(.unexpectedResponse).contains("couldn't read"),
-            equals: true,
-            "unexpected-response failure text should describe an unreadable response"
+            manualUpdateCheckFailureText(.httpStatus(500)),
+            equals: manualUpdateCheckFailureText(.unexpectedResponse),
+            "every non-network failure kind should show the same plain-language text"
         )
         try expect(
             UpdateCheck.normalizedReleaseVersion(from: " V1.2.3\n"),
