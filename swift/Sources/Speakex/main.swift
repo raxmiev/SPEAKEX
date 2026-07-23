@@ -530,6 +530,7 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Speech model": ["ru": "Модель распознавания", "uz": "Nutq modeli"],
     "Parakeet v3 — Local": ["ru": "Parakeet v3 — Локально", "uz": "Parakeet v3 — Lokal"],
     "OpenAI Cloud — Cloud": ["ru": "OpenAI Cloud — Облако", "uz": "OpenAI Cloud — Bulut"],
+    "UzbekVoice — Cloud": ["ru": "UzbekVoice — Облако", "uz": "UzbekVoice — Bulut"],
     "The local model stays available offline; the cloud model is more accurate.": ["ru": "Локальная модель работает офлайн; облачная — точнее.", "uz": "Lokal model oflayn ishlaydi; bulutli model aniqroq."],
     "Transcription model": ["ru": "Модель транскрибации", "uz": "Transkripsiya modeli"],
     "Only applies to the cloud speech model. Uzbek always uses its own dedicated model regardless of this setting.": ["ru": "Применяется только с облачной моделью распознавания. Для узбекского всегда используется своя отдельная модель независимо от этой настройки.", "uz": "Faqat bulutli nutq modeliga tegishli. O‘zbekcha uchun bu sozlamadan qat’i nazar har doim o‘ziga xos alohida model ishlatiladi."],
@@ -668,13 +669,24 @@ enum SpeakexProxy {
     static let baseURL = "https://speakex-proxy.vercel.app"
 
     /// Non-nil (with a user-facing message) when the proxy rejected
-    /// the request itself — free-tier monthly limit reached — rather
-    /// than forwarding to OpenAI. Distinguishes that from any other
-    /// HTTP failure so the log/error says why, not just "HTTP 429".
-    static func quotaExceededMessage(from data: Data) -> String? {
+    /// the request itself — free-tier monthly limit reached, or a
+    /// Premium-only feature used on a free device — rather than
+    /// forwarding to the upstream provider. Distinguishes that from
+    /// any other HTTP failure so the log/error says why, not just
+    /// "HTTP 429"/"HTTP 403".
+    static func structuredErrorMessage(from data: Data) -> String? {
         guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              obj["error"] as? String == "quota_exceeded" else { return nil }
-        return obj["message"] as? String ?? "Free-tier monthly limit reached. Upgrade to Premium for unlimited use."
+              let code = obj["error"] as? String else { return nil }
+        let fallback: String
+        switch code {
+        case "quota_exceeded":
+            fallback = "Free-tier monthly limit reached. Upgrade to Premium for unlimited use."
+        case "uzbek_requires_premium":
+            fallback = "Uzbek transcription is a Premium feature. Upgrade to Premium for Uzbek dictation."
+        default:
+            return nil
+        }
+        return obj["message"] as? String ?? fallback
     }
 }
 
@@ -829,8 +841,8 @@ enum TextPolisher {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
                 let status = (response as? HTTPURLResponse)?.statusCode ?? -1
-                if let quotaMessage = SpeakexProxy.quotaExceededMessage(from: data) {
-                    log("\(purpose): \(quotaMessage)")
+                if let message = SpeakexProxy.structuredErrorMessage(from: data) {
+                    log("\(purpose): \(message)")
                 } else {
                     log("\(purpose): HTTP \(status)")
                 }
@@ -899,9 +911,9 @@ enum OpenAICloudASR {
             ])
         }
         guard http.statusCode == 200 else {
-            if let quotaMessage = SpeakexProxy.quotaExceededMessage(from: data) {
+            if let message = SpeakexProxy.structuredErrorMessage(from: data) {
                 throw NSError(domain: "Speakex", code: http.statusCode, userInfo: [
-                    NSLocalizedDescriptionKey: quotaMessage,
+                    NSLocalizedDescriptionKey: message,
                 ])
             }
             let detail = String(data: data.prefix(300), encoding: .utf8) ?? ""
@@ -952,6 +964,14 @@ func wavData(fromMonoSamples samples: [Float], sampleRate: Double) -> Data {
 enum SpeechModelProfile: String, CaseIterable {
     case multilingualV3 = "multilingual_v3"
     case openaiCloud = "openai_cloud"
+    // Uzbek-only — the server routes this to uzbekvoice.ai's
+    // enhanced-stt model instead of OpenAI (see SpeakexProxy /
+    // OpenAICloudASR). Wire-compatible with .openaiCloud on the
+    // client: same request shape, same TranscriptionWorker engine —
+    // this case exists purely so the picker can show/select it
+    // honestly instead of silently saying "OpenAI Cloud" while Uzbek
+    // is actually being recognized by a different vendor entirely.
+    case uzbekVoice = "uzbekvoice"
     // Deprecated production option. Kept only so old saved preferences
     // can be read and migrated back to the supported v3 model.
     case englishUnified = "english_unified"
@@ -972,6 +992,8 @@ enum SpeechModelProfile: String, CaseIterable {
             return "Multilingual (Parakeet TDT v3)"
         case .openaiCloud:
             return "OpenAI Cloud (gpt-4o-transcribe)"
+        case .uzbekVoice:
+            return "UzbekVoice (enhanced-stt, Uzbek only)"
         case .englishUnified:
             return "English optimized (Parakeet Unified, deprecated)"
         }
@@ -983,6 +1005,8 @@ enum SpeechModelProfile: String, CaseIterable {
             return "Parakeet TDT v3"
         case .openaiCloud:
             return "OpenAI Cloud"
+        case .uzbekVoice:
+            return "UzbekVoice"
         case .englishUnified:
             return "Parakeet Unified"
         }
@@ -994,6 +1018,8 @@ enum SpeechModelProfile: String, CaseIterable {
             return "FluidAudio · Parakeet TDT v3 multilingual (CoreML / ANE)"
         case .openaiCloud:
             return "OpenAI · gpt-4o-transcribe (cloud)"
+        case .uzbekVoice:
+            return "uzbekvoice.ai · enhanced-stt (cloud, Uzbek only)"
         case .englishUnified:
             return "FluidAudio · Parakeet Unified English (deprecated)"
         }
@@ -1005,7 +1031,7 @@ enum SpeechModelProfile: String, CaseIterable {
 
     var cacheResetDetail: String {
         switch self {
-        case .openaiCloud:
+        case .openaiCloud, .uzbekVoice:
             return "The cloud model keeps no local cache. Speakex will delete the local Parakeet cache used by the local model."
         case .multilingualV3:
             return "Speakex will delete the local Parakeet TDT v3 model cache, unload the current speech model, and download a fresh verified copy before dictation is available again."
@@ -1014,12 +1040,16 @@ enum SpeechModelProfile: String, CaseIterable {
         }
     }
 
+    var isCloudModel: Bool {
+        self == .openaiCloud || self == .uzbekVoice
+    }
+
     var estimatedDownloadBytes: Int64 {
-        self == .openaiCloud ? 0 : 700 * 1024 * 1024
+        isCloudModel ? 0 : 700 * 1024 * 1024
     }
 
     var downloadSizeText: String {
-        self == .openaiCloud ? "no download" : "about 500-700 MB"
+        isCloudModel ? "no download" : "about 500-700 MB"
     }
 }
 
@@ -5300,7 +5330,7 @@ actor TranscriptionWorker {
         }
         let t0 = Date()
         switch profile {
-        case .openaiCloud:
+        case .openaiCloud, .uzbekVoice:
             engine = .openAICloud
         default:
             engine = .parakeetV3(try await loadParakeetV3(progressHandler: progressHandler))
@@ -13314,6 +13344,7 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let choices: [(SpeechModelProfile, String)] = [
             (.multilingualV3, "\(L("Parakeet v3 — Local")) · Free"),
             (.openaiCloud, "\(L("OpenAI Cloud — Cloud")) · Premium"),
+            (.uzbekVoice, "\(L("UzbekVoice — Cloud")) · Premium"),
         ]
         let busy = isRecording || isBusy || isTerminating || startupTask != nil
             || isResettingSpeechModelCache || isSwitchingSpeechModel
@@ -13338,11 +13369,13 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
               profile != settings.speechModelProfile,
               startupTask == nil, !isRecording, !isBusy,
               !isResettingSpeechModelCache, !isSwitchingSpeechModel else { return }
-        // The local model cannot recognize Uzbek at all — rather than
-        // block the switch (which left the model on cloud without it
-        // being obvious the switch was rejected), fall back to the
-        // auto Russian/English language so the switch actually happens.
-        if profile != .openaiCloud, settings.processingLanguage == .uzbek {
+        // UzbekVoice is the only model that can recognize Uzbek, and
+        // it can't recognize anything else — keep model and language
+        // in sync in both directions rather than leaving a broken
+        // combination in place after a switch.
+        if profile == .uzbekVoice {
+            settings.processingLanguage = .uzbek
+        } else if settings.processingLanguage == .uzbek {
             settings.processingLanguage = .auto
             settings.dictationLanguage = .auto
         }
@@ -14988,14 +15021,14 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc private func showAboutClicked(_ sender: NSMenuItem) {
         showAppForModal()
-        let usesCloud = settings.speechModelProfile == .openaiCloud
+        let usesCloud = settings.speechModelProfile.isCloudModel
             || settings.textPolishEnabled
             || settings.translatorDirection != .off
         let privacyLine = usesCloud
-            ? "Cloud features are active: audio and/or text are sent to OpenAI's API. No telemetry to Speakex/Anthropic."
+            ? "Cloud features are active: audio and/or text are sent to SPEAKEX's server, which forwards them to OpenAI's API (or, for Uzbek, uzbekvoice.ai) and never stores them. No telemetry to Speakex/Anthropic."
             : "Local-only dictation. No cloud transcription, no telemetry."
         let networkLine = usesCloud
-            ? "Network: model download, optional update check and install, OpenAI API calls for the enabled cloud features."
+            ? "Network: model download, optional update check and install, cloud API calls for the enabled cloud features."
             : "Network: model download, optional update check and install."
         let alert = NSAlert()
         alert.messageText = "SPEAKEX \(currentBundleVersion())"
@@ -19531,6 +19564,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                      options: [
                          ("\(L("Parakeet v3 — Local")) · Free", SpeechModelProfile.multilingualV3.rawValue),
                          ("\(L("OpenAI Cloud — Cloud")) · Premium", SpeechModelProfile.openaiCloud.rawValue),
+                         ("\(L("UzbekVoice — Cloud")) · Premium", SpeechModelProfile.uzbekVoice.rawValue),
                      ],
                      action: #selector(selectSpeechModelClicked(_:))),
             popupRow(title: L("Language"),
@@ -20246,8 +20280,8 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
 
         if language == .uzbek {
             settings.processingLanguage = .uzbek
-            if settings.speechModelProfile != .openaiCloud {
-                settings.speechModelProfile = .openaiCloud
+            if settings.speechModelProfile != .uzbekVoice {
+                settings.speechModelProfile = .uzbekVoice
                 if SPEAKEXAgentService.isAgentRunning() {
                     try? SPEAKEXAgentService.restart()
                 }
@@ -20263,6 +20297,15 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         case .english: settings.dictationLanguage = .english
         default: settings.dictationLanguage = .auto
         }
+        // UzbekVoice can't recognize anything but Uzbek — restrict it
+        // the same way the model picker restricts itself away from
+        // Uzbek when a non-Uzbek model is chosen.
+        if settings.speechModelProfile == .uzbekVoice {
+            settings.speechModelProfile = SpeechModelProfile.productionDefault
+            if SPEAKEXAgentService.isAgentRunning() {
+                try? SPEAKEXAgentService.restart()
+            }
+        }
         refresh(force: true)
     }
 
@@ -20277,12 +20320,13 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
         guard let raw = sender.selectedItem?.representedObject as? String,
               let profile = SpeechModelProfile(rawValue: raw),
               profile.isProductionSupported else { return }
-        if profile != .openaiCloud, settings.processingLanguage == .uzbek {
-            // The local model can't recognize Uzbek at all — rather than
-            // block the switch (which silently left the model on cloud
-            // if the user didn't notice the error), fall back to the
-            // auto Russian/English language so the switch actually
-            // takes effect, same as switching away from Uzbek directly.
+        // UzbekVoice is the only model that can recognize Uzbek, and it
+        // can't recognize anything else — keep model and language in
+        // sync in both directions rather than leaving a broken
+        // combination in place after a switch.
+        if profile == .uzbekVoice {
+            settings.processingLanguage = .uzbek
+        } else if settings.processingLanguage == .uzbek {
             settings.processingLanguage = .auto
             settings.dictationLanguage = .auto
         }
