@@ -12310,6 +12310,13 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc private func quitClicked(_ sender: NSMenuItem) {
         guard confirmStopDictation() else { return }
+        // The dialog promises dictation stops "until you open SPEAKEX
+        // again" — a bare NSApp.terminate() doesn't keep that promise:
+        // the LaunchAgent has KeepAlive=true, so launchd silently
+        // relaunches the agent moments after any exit unless the job
+        // is actually disabled first, same as "Stop Service".
+        settings.agentEnabled = false
+        SPEAKEXAgentService.stop()
         NSApp.terminate(self)
     }
 
