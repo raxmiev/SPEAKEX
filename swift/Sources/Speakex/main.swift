@@ -360,6 +360,9 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "Update available": ["ru": "Доступно обновление", "uz": "Yangilanish mavjud"],
     "SPEAKEX %@ is available.": ["ru": "Доступна версия SPEAKEX %@.", "uz": "SPEAKEX %@ mavjud."],
     "Update…": ["ru": "Обновить…", "uz": "Yangilash…"],
+    "Update to v%@?": ["ru": "Обновить до v%@?", "uz": "v%@ ga yangilansinmi?"],
+    "SPEAKEX will download and install the update, then reopen on its own — the window closing during this is expected.": ["ru": "SPEAKEX скачает и установит обновление, затем сам откроется заново — то, что окно закроется в процессе, это нормально.", "uz": "SPEAKEX yangilanishni yuklab olib o‘rnatadi, so‘ng o‘zi qayta ochiladi — bu jarayonda oyna yopilishi normal holat."],
+    "Update": ["ru": "Обновить", "uz": "Yangilash"],
     "Install ID": ["ru": "ID установки", "uz": "O‘rnatish ID"],
     "Anonymous ID for this install. Send it to support to be granted Premium.": ["ru": "Анонимный ID этой установки. Отправьте его в поддержку, чтобы вам включили Премиум.", "uz": "Ushbu o‘rnatishning anonim ID’si. Premium olish uchun uni yordam xizmatiga yuboring."],
     "Permissions": ["ru": "Разрешения", "uz": "Ruxsatlar"],
@@ -7318,13 +7321,32 @@ func manualUpdateCheckFailureText(_ failure: UpdateCheckFailure) -> String {
     }
 }
 
-/// Shown when an update is available — this is a plain, unsigned
-/// "public source build" (installed via install.sh, not Homebrew), so
-/// there's no in-place auto-update; re-running the installer is the
-/// update mechanism. A free function (not a method on either app
-/// delegate) so both the agent's own update flow and the control
-/// panel's can show an identical, correct instruction regardless of
-/// which process actually discovered the update.
+/// Runs the exact same install.sh a user would otherwise copy-paste
+/// into Terminal, as a detached background process — genuinely safe
+/// to fire from a running SPEAKEX process despite install.sh's own
+/// `pkill -x SPEAKEX` line (which will kill *this* very process
+/// partway through): a spawned child keeps running after its parent
+/// exits, so download/verify/replace complete regardless, and the
+/// script's own `open` call at the end relaunches the freshly
+/// installed app on its own. There's deliberately no "update
+/// finished" callback here — the process that would show it is the
+/// one about to be replaced.
+func runAutomaticUpdate() throws {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/bin/bash")
+    process.arguments = [
+        "-c",
+        "curl -fsSL https://raw.githubusercontent.com/raxmiev/SPEAKEX/main/install.sh | bash",
+    ]
+    try process.run()
+}
+
+/// Fallback shown only when runAutomaticUpdate() couldn't even start
+/// (e.g. /bin/bash unavailable) — the same manual instructions this
+/// app always showed before automatic updating existed. A free
+/// function (not a method on either app delegate) so both the agent's
+/// own update flow and the control panel's can show an identical
+/// instruction regardless of which process hit the failure.
 @MainActor
 func showManualUpdateInstallInstructions(for release: GitHubRelease) {
     let alert = NSAlert()
@@ -15397,10 +15419,14 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func startUpdate(for release: GitHubRelease) {
-        showManualUpdateRequired(
-            for: release,
-            reason: "The public source build updates by running the installer again."
-        )
+        do {
+            try runAutomaticUpdate()
+        } catch {
+            showManualUpdateRequired(
+                for: release,
+                reason: "SPEAKEX couldn't start the automatic updater (\(error.localizedDescription))."
+            )
+        }
     }
 
     private func showManualUpdateRequired(for release: GitHubRelease, reason: String) {
@@ -19598,9 +19624,19 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     /// file the panel already polls for dictation status — this reads
     /// that back so an update discovered from either process shows up
     /// here too, without the panel needing to run its own check.
+    ///
+    /// The state file can go stale in exactly one way: it was written
+    /// by an *older* agent process that discovered a real update, the
+    /// user updated (replacing the .app bundle) since, and nothing
+    /// has overwritten the file because the agent hasn't run another
+    /// check yet (or isn't running at all). This process's own
+    /// currentBundleVersion() is always accurate — it's reading its
+    /// own freshly-launched binary — so comparing against that catches
+    /// the stale case regardless of why the file didn't get refreshed.
     private func pendingUpdateInfo() -> (version: String, url: String)? {
         guard let state = AgentRuntimeStateStore.read(),
-              let version = state.pendingUpdateVersion, !version.isEmpty else { return nil }
+              let version = state.pendingUpdateVersion, !version.isEmpty,
+              isNewer(version, than: currentBundleVersion()) else { return nil }
         return (version, state.pendingUpdateURL ?? "https://github.com/raxmiev/SPEAKEX/releases/latest")
     }
 
@@ -19615,9 +19651,20 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
 
     @objc private func updateNowFromPanelClicked(_ sender: NSButton) {
         guard let update = pendingUpdateInfo() else { return }
-        let release = GitHubRelease(tagName: "v\(update.version)", version: update.version,
-                                    body: "", htmlURL: update.url)
-        showManualUpdateInstallInstructions(for: release)
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = String(format: L("Update to v%@?"), update.version)
+        alert.informativeText = L("SPEAKEX will download and install the update, then reopen on its own — the window closing during this is expected.")
+        alert.addButton(withTitle: L("Update"))
+        alert.addButton(withTitle: L("Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            try runAutomaticUpdate()
+        } catch {
+            let release = GitHubRelease(tagName: "v\(update.version)", version: update.version,
+                                        body: "", htmlURL: update.url)
+            showManualUpdateInstallInstructions(for: release)
+        }
     }
 
     private func permissionsSectionCard() -> NSView {
