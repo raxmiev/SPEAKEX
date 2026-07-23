@@ -357,6 +357,9 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "System": ["ru": "Системный", "uz": "Tizim"],
     "Control panel. Closing this window does not stop dictation.": ["ru": "Панель управления. Закрытие окна не останавливает диктовку.", "uz": "Boshqaruv paneli. Oynani yopish diktovkani to‘xtatmaydi."],
     "Service": ["ru": "Служба", "uz": "Xizmat"],
+    "Update available": ["ru": "Доступно обновление", "uz": "Yangilanish mavjud"],
+    "SPEAKEX %@ is available.": ["ru": "Доступна версия SPEAKEX %@.", "uz": "SPEAKEX %@ mavjud."],
+    "Update…": ["ru": "Обновить…", "uz": "Yangilash…"],
     "Install ID": ["ru": "ID установки", "uz": "O‘rnatish ID"],
     "Anonymous ID for this install. Send it to support to be granted Premium.": ["ru": "Анонимный ID этой установки. Отправьте его в поддержку, чтобы вам включили Премиум.", "uz": "Ushbu o‘rnatishning anonim ID’si. Premium olish uchun uni yordam xizmatiga yuboring."],
     "Permissions": ["ru": "Разрешения", "uz": "Ruxsatlar"],
@@ -2678,6 +2681,11 @@ struct AgentRuntimeState: Codable {
     var missingPermissions: [String]
     var hotkeyName: String
     var triggerMode: String
+    // Mirrors the agent's own `pendingUpdate` (set by its periodic
+    // background check) so the separate control-panel process can
+    // show "update available" too, without running its own check.
+    var pendingUpdateVersion: String? = nil
+    var pendingUpdateURL: String? = nil
 }
 
 enum AgentRuntimeStateStore {
@@ -7311,6 +7319,31 @@ func manualUpdateCheckFailureText(_ failure: UpdateCheckFailure) -> String {
         return "GitHub returned an error (HTTP \(code)). Try again later."
     case .unexpectedResponse:
         return "GitHub returned a response SPEAKEX couldn't read. Try again later, or check the releases page on GitHub directly."
+    }
+}
+
+/// Shown when an update is available — this is a plain, unsigned
+/// "public source build" (installed via install.sh, not Homebrew), so
+/// there's no in-place auto-update; re-running the installer is the
+/// update mechanism. A free function (not a method on either app
+/// delegate) so both the agent's own update flow and the control
+/// panel's can show an identical, correct instruction regardless of
+/// which process actually discovered the update.
+@MainActor
+func showManualUpdateInstallInstructions(for release: GitHubRelease) {
+    let alert = NSAlert()
+    alert.alertStyle = .informational
+    alert.messageText = "Update available: v\(release.version)"
+    alert.informativeText = """
+    To update, run this command in Terminal:
+
+    curl -fsSL https://raw.githubusercontent.com/raxmiev/SPEAKEX/main/install.sh | bash
+    """
+    alert.addButton(withTitle: "Open Release Page")
+    alert.addButton(withTitle: "Close")
+    let response = alert.runModal()
+    if response == .alertFirstButtonReturn, let url = URL(string: release.htmlURL) {
+        NSWorkspace.shared.open(url)
     }
 }
 
@@ -12408,7 +12441,9 @@ final class SpeakexApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                               speechModelReady: isSpeechModelReady,
                               missingPermissions: missing,
                               hotkeyName: hotkey.hotkey.name,
-                              triggerMode: settings.triggerMode.rawValue)
+                              triggerMode: settings.triggerMode.rawValue,
+                              pendingUpdateVersion: pendingUpdate?.version,
+                              pendingUpdateURL: pendingUpdate?.htmlURL)
         )
     }
 
@@ -19543,7 +19578,11 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
     }
 
     private func serviceSectionCard() -> NSView {
-        sectionCard(title: L("Service"), icon: "power", rows: [
+        var rows: [NSView] = []
+        if let update = pendingUpdateInfo() {
+            rows.append(updateAvailableRow(update))
+        }
+        rows.append(contentsOf: [
             serviceStatusView(),
             serviceButtonsView(),
             statusRow(title: L("Install ID"),
@@ -19553,6 +19592,34 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                       buttonTitle: L("Copy"),
                       action: #selector(copyDeviceIdClicked(_:))),
         ])
+        return sectionCard(title: L("Service"), icon: "power", rows: rows)
+    }
+
+    /// The agent's own periodic/manual update check (menu bar "Check
+    /// for Updates…") writes what it finds into the same shared state
+    /// file the panel already polls for dictation status — this reads
+    /// that back so an update discovered from either process shows up
+    /// here too, without the panel needing to run its own check.
+    private func pendingUpdateInfo() -> (version: String, url: String)? {
+        guard let state = AgentRuntimeStateStore.read(),
+              let version = state.pendingUpdateVersion, !version.isEmpty else { return nil }
+        return (version, state.pendingUpdateURL ?? "https://github.com/raxmiev/SPEAKEX/releases/latest")
+    }
+
+    private func updateAvailableRow(_ info: (version: String, url: String)) -> NSView {
+        statusRow(title: L("Update available"),
+                  detail: String(format: L("SPEAKEX %@ is available."), info.version),
+                  status: "v\(info.version)",
+                  statusColor: .systemBlue,
+                  buttonTitle: L("Update…"),
+                  action: #selector(updateNowFromPanelClicked(_:)))
+    }
+
+    @objc private func updateNowFromPanelClicked(_ sender: NSButton) {
+        guard let update = pendingUpdateInfo() else { return }
+        let release = GitHubRelease(tagName: "v\(update.version)", version: update.version,
+                                    body: "", htmlURL: update.url)
+        showManualUpdateInstallInstructions(for: release)
     }
 
     private func permissionsSectionCard() -> NSView {
