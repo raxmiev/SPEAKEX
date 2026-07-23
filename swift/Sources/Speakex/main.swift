@@ -532,7 +532,7 @@ let UI_TRANSLATIONS: [String: [String: String]] = [
     "OpenAI Cloud — Cloud": ["ru": "OpenAI Cloud — Облако", "uz": "OpenAI Cloud — Bulut"],
     "The local model stays available offline; the cloud model is more accurate.": ["ru": "Локальная модель работает офлайн; облачная — точнее.", "uz": "Lokal model oflayn ishlaydi; bulutli model aniqroq."],
     "Transcription model": ["ru": "Модель транскрибации", "uz": "Transkripsiya modeli"],
-    "Only applies to the cloud speech model.": ["ru": "Применяется только с облачной моделью распознавания.", "uz": "Faqat bulutli nutq modeliga tegishli."],
+    "Only applies to the cloud speech model. Uzbek always uses its own dedicated model regardless of this setting.": ["ru": "Применяется только с облачной моделью распознавания. Для узбекского всегда используется своя отдельная модель независимо от этой настройки.", "uz": "Faqat bulutli nutq modeliga tegishli. O‘zbekcha uchun bu sozlamadan qat’i nazar har doim o‘ziga xos alohida model ishlatiladi."],
     "gpt-4o-transcribe (best accuracy)": ["ru": "gpt-4o-transcribe (максимальная точность)", "uz": "gpt-4o-transcribe (eng aniq)"],
     "gpt-4o-mini-transcribe (cheaper, less accurate)": ["ru": "gpt-4o-mini-transcribe (дешевле, менее точная)", "uz": "gpt-4o-mini-transcribe (arzon, kamroq aniq)"],
     "Transcription hint": ["ru": "Подсказка для транскрибации", "uz": "Transkripsiya uchun maslahat"],
@@ -855,24 +855,13 @@ enum TextPolisher {
 /// Cloud speech recognition, proxied through SPEAKEX's own server
 /// (see SpeakexProxy) rather than calling OpenAI directly — the app
 /// never holds an OpenAI key. Audio is uploaded as a 16 kHz mono WAV;
-/// the 25 MB API limit allows roughly 13 minutes per clip.
+/// the 25 MB API limit allows roughly 13 minutes per clip. Despite
+/// the name, Uzbek audio never reaches OpenAI at all — the server
+/// routes it to uzbekvoice.ai instead based on the `language` field
+/// sent below (OpenAI's models default to Cyrillic output for Uzbek).
+/// The `model` field here is still meaningful for every other
+/// language; the server ignores it for Uzbek.
 enum OpenAICloudASR {
-    /// Whisper-family models (including OpenAI's gpt-4o-transcribe)
-    /// saw far more Cyrillic Uzbek than Latin during training, so
-    /// without a nudge they sometimes transcribe spoken Uzbek into
-    /// Cyrillic — even though the rest of the app (text correction,
-    /// translator) assumes Latin script throughout. OpenAI's
-    /// transcription `prompt` field is a style/vocabulary hint, not a
-    /// hard constraint, so this biases rather than guarantees the
-    /// output script.
-    private static let uzbekLatinScriptHint = "Bu matn o'zbek tilida, lotin alifbosida yozilgan."
-
-    static func effectivePrompt(processingLanguage: ProcessingLanguage, userPrompt: String) -> String {
-        guard processingLanguage == .uzbek else { return userPrompt }
-        guard !userPrompt.isEmpty else { return uzbekLatinScriptHint }
-        return "\(uzbekLatinScriptHint) \(userPrompt)"
-    }
-
     static func transcribe(samples: [Float],
                            languageCode: String?,
                            model: String = "gpt-4o-transcribe",
@@ -5360,12 +5349,10 @@ actor TranscriptionWorker {
             let callStartedAt = ProcessInfo.processInfo.systemUptime
             let code = cloudSpeechLanguageCode(processing: Settings.shared.processingLanguage,
                                                dictation: Settings.shared.dictationLanguage)
-            let prompt = OpenAICloudASR.effectivePrompt(processingLanguage: Settings.shared.processingLanguage,
-                                                        userPrompt: Settings.shared.transcribePrompt)
             let text = try await OpenAICloudASR.transcribe(samples: samples,
                                                             languageCode: code,
                                                             model: Settings.shared.transcribeModel,
-                                                            prompt: prompt)
+                                                            prompt: Settings.shared.transcribePrompt)
             let callCompletedAt = ProcessInfo.processInfo.systemUptime
             return TranscriptionWorkerResult(
                 text: text,
@@ -19555,14 +19542,14 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                      ],
                      action: #selector(selectLanguageClicked(_:))),
             popupRow(title: L("Transcription model"),
-                     detail: L("Only applies to the cloud speech model."),
+                     detail: L("Only applies to the cloud speech model. Uzbek always uses its own dedicated model regardless of this setting."),
                      selectedValue: settings.transcribeModel,
                      options: [
                          (L("gpt-4o-transcribe (best accuracy)"), "gpt-4o-transcribe"),
                          (L("gpt-4o-mini-transcribe (cheaper, less accurate)"), "gpt-4o-mini-transcribe"),
                      ],
                      action: #selector(selectTranscribeModelClicked(_:)),
-                     enabled: settings.speechModelProfile == .openaiCloud),
+                     enabled: settings.speechModelProfile == .openaiCloud && settings.processingLanguage != .uzbek),
             statusRow(title: L("Transcription hint"),
                       detail: promptPreview(settings.transcribePrompt,
                                             placeholder: L("Optional: names, jargon, or expected style to help the cloud model recognize them.")),
@@ -19570,7 +19557,7 @@ private final class SPEAKEXControlPanelApp: NSObject, NSApplicationDelegate, NSW
                       statusColor: .secondaryLabelColor,
                       buttonTitle: L("Edit…"),
                       action: #selector(editTranscribePromptClicked(_:)),
-                      buttonEnabled: settings.speechModelProfile == .openaiCloud),
+                      buttonEnabled: settings.speechModelProfile == .openaiCloud && settings.processingLanguage != .uzbek),
         ])
     }
 
